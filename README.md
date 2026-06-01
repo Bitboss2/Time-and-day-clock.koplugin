@@ -1,4 +1,4 @@
-# Time & Day Clock (time_and_day_clock.koplugin)
+# Time & Day Clock
 
 An ultra-low-power, highly-customizable screensaver and clock widget for KOReader on e-ink devices.
 
@@ -14,11 +14,11 @@ An ultra-low-power, highly-customizable screensaver and clock widget for KOReade
 
 Here is the clock plugin in action:
 
-| Word Clock Face | Analog Clock Face (Optimized) |
+| Interactive Visual Customizer | Word Clock Face |
 | :---: | :---: |
 | ![Word Clock](sreenshot_demo/word_clock_view.png) | ![Analog Clock](sreenshot_demo/analog_clock_layout.png) |
 
-| Interactive Visual Customizer | Fullscreen Stacked Face |
+| full screen clock | customizable appearance |
 | :---: | :---: |
 | ![Visual Customizer](sreenshot_demo/customizer_view.png) | ![Demo 1](sreenshot_demo/demo_1.png) |
 
