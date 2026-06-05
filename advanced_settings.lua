@@ -26,13 +26,12 @@ return {
         custom_rotation = 3,   -- 0, 1, 2, or 3
     },
 
-    -- SUSPEND BEHAVIOUR --
-    -- The same rules as rotation apply: set all three together for predictable results.
-    suspend = {
-        never_suspend          = nil,  -- true = never suspend while clock runs
-        custom_timeout_enabled = nil,  -- true = use the timeout below instead of KOReader default
-        custom_timeout_minutes = nil,  -- e.g. 30
-    },
+    -- CPU WAKE DURATION --
+    -- How long the CPU stays awake after refreshing the clock display (seconds).
+    -- After this delay, the wake lock is released and KOReader's AutoSuspend
+    -- puts the device back to sleep. Increase if the screen doesn't update
+    -- properly on your device. Range: 0.1 - 5.0, default: 0.5
+    wake_duration = nil,
 
     png_overlay = {
         enabled                  = true,  -- true or false

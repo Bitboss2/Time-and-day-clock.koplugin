@@ -66,32 +66,30 @@ function DtDisplay:init()
                         end
                         -- Schedule next RTC alarm
                         self:schedulePeriodicRefresh()
-                        -- CRITICAL: Force the device back into Deep Sleep after a safe
-                        -- delay (0.5s) to let the e-ink pipeline fully flush the framebuffer.
-                        -- Without this, the CPU stays awake indefinitely!
-                        self.suspend_timer = UIManager:scheduleIn(0.5, function()
-                            logger.info("DtDisplay: Forcing suspend after screensaver update")
-                            self.suspend_timer = nil
-                            UIManager:suspend()
+                        -- Release wake lock after the configured wake duration.
+                        -- KOReader's own AutoSuspend will put the device back to sleep.
+                        local wake_dur = (self.settings and self.settings.wake_duration) or 0.5
+                        UIManager:scheduleIn(wake_dur, function()
+                            logger.info("DtDisplay: Releasing wake lock after screensaver update")
+                            SystemUtils.turnOffKeepAwake()
                         end)
                     else
                         logger.info("DtDisplay: Skipping screensaver redraw on scheduled wakeup")
-                        -- Still suspend even if we skip the redraw
-                        self.suspend_timer = UIManager:scheduleIn(0.5, function()
-                            logger.info("DtDisplay: Forcing suspend after skipping redraw")
-                            self.suspend_timer = nil
-                            UIManager:suspend()
+                        -- Release wake lock even if we skip the redraw
+                        local wake_dur = (self.settings and self.settings.wake_duration) or 0.5
+                        UIManager:scheduleIn(wake_dur, function()
+                            logger.info("DtDisplay: Releasing wake lock after skipping redraw")
+                            SystemUtils.turnOffKeepAwake()
                         end)
                     end
                 end)
                 if not ok then
                     logger.err("DtDisplay: Error in screensaver RTC refresh:", err)
-                    -- In case of error, make sure we reschedule the next wakeup and suspend
                     pcall(function() self:schedulePeriodicRefresh() end)
-                    self.suspend_timer = UIManager:scheduleIn(0.5, function()
-                        logger.info("DtDisplay: Forcing suspend after RTC refresh error")
-                        self.suspend_timer = nil
-                        UIManager:suspend()
+                    local wake_dur = (self.settings and self.settings.wake_duration) or 0.5
+                    UIManager:scheduleIn(wake_dur, function()
+                        logger.info("DtDisplay: Releasing wake lock after RTC refresh error")
+                        SystemUtils.turnOffKeepAwake()
                     end)
                 end
             end)
@@ -139,11 +137,7 @@ function DtDisplay:initLuaSettings()
                 cycle_minutes = 1,
                 full_refresh_on_cycle = false,
             },
-            suspend = {
-                never_suspend = false,
-                custom_timeout_enabled = false,
-                custom_timeout_minutes = 60,
-            },
+            -- suspend settings removed in v6 (always uses RTC deep sleep now)
         })
         -- Migration: ensure per-image config setting exists
         if self.local_storage.data.png_overlay.use_image_config == nil then
@@ -215,12 +209,16 @@ function DtDisplay:initLuaSettings()
         self.local_storage:flush()
     end
 
-    if self.local_storage.data.suspend == nil then
-        self.local_storage.data.suspend = {
-            never_suspend = false,
-            custom_timeout_enabled = false,
-            custom_timeout_minutes = 60,
-        }
+    -- Migration: remove obsolete suspend settings (v6)
+    -- Keep the table for backward compat but values are no longer used
+    if self.local_storage.data.suspend ~= nil then
+        self.local_storage.data.suspend = nil
+        self.local_storage:flush()
+    end
+
+    -- Migration: wake duration (how long CPU stays awake after RTC wakeup)
+    if self.local_storage.data.wake_duration == nil then
+        self.local_storage.data.wake_duration = 0.5
         self.local_storage:flush()
     end
 
@@ -1057,58 +1055,39 @@ function DtDisplay:setCustomRotation(rotation)
     self.local_storage:flush()
 end
 
---- Build the suspend settings submenu
+--- Build the power settings submenu
 function DtDisplay:getSuspendMenuList()
     local menu_list = {}
 
-    -- Never suspend
-    table.insert(menu_list, {
-        text = _("Never suspend while clock is running"),
-        checked_func = function()
-            return self.settings.suspend.never_suspend
-        end,
-        callback = function()
-            self.settings.suspend.never_suspend = not self.settings.suspend.never_suspend
-            if self.settings.suspend.never_suspend then
-                self.settings.suspend.custom_timeout_enabled = false
-            end
-            self:saveSuspendSettings()
-        end,
-    })
-
-
-
-    -- Custom timeout toggle
-    table.insert(menu_list, {
-        text = _("Use custom suspend timeout"),
-        checked_func = function()
-            return self.settings.suspend.custom_timeout_enabled
-        end,
-        enabled_func = function()
-            return not self.settings.suspend.never_suspend
-        end,
-        callback = function()
-            self.settings.suspend.custom_timeout_enabled = not self.settings.suspend.custom_timeout_enabled
-            self:saveSuspendSettings()
-        end,
-    })
-
-    -- Custom timeout value
+    -- Wake duration spinner
     table.insert(menu_list, {
         text_func = function()
-            local mins = self.settings.suspend.custom_timeout_minutes or 60
-            if mins == 1 then
-                return T(_("Suspend timeout: %1 minute"), mins)
-            else
-                return T(_("Suspend timeout: %1 minutes"), mins)
-            end
+            local dur = self.settings.wake_duration or 0.5
+            return T(_("CPU wake duration: %1 s"), string.format("%.1f", dur))
         end,
         keep_menu_open = true,
-        enabled_func = function()
-            return self.settings.suspend.custom_timeout_enabled and not self.settings.suspend.never_suspend
-        end,
         callback = function(touchmenu_instance)
-            self:showSuspendTimeoutSpinWidget(touchmenu_instance)
+            local SpinWidget = require("ui/widget/spinwidget")
+            local current_value = math.floor((self.settings.wake_duration or 0.5) * 10)
+            UIManager:show(
+                SpinWidget:new {
+                    value = current_value,
+                    value_min = 1,   -- 0.1s
+                    value_max = 50,  -- 5.0s
+                    value_step = 1,
+                    value_hold_step = 5,
+                    ok_text = _("Set duration"),
+                    title_text = _("CPU wake duration (×0.1 seconds)\nHow long the CPU stays awake after refreshing\nthe clock. Increase if the screen doesn't\nupdate properly on your device."),
+                    callback = function(spin)
+                        self.settings.wake_duration = spin.value / 10
+                        self.local_storage:reset(self.settings)
+                        self.local_storage:flush()
+                        if touchmenu_instance then
+                            touchmenu_instance:updateItems()
+                        end
+                    end
+                }
+            )
         end,
         separator = true,
     })
@@ -1116,13 +1095,7 @@ function DtDisplay:getSuspendMenuList()
     -- Info: current behavior
     table.insert(menu_list, {
         text_func = function()
-            if self.settings.suspend.never_suspend then
-                return _("Status: Auto-suspend disabled while clock runs")
-            elseif self.settings.suspend.custom_timeout_enabled then
-                return T(_("Status: Custom timeout of %1 min"), self.settings.suspend.custom_timeout_minutes or 60)
-            else
-                return _("Status: Using KOReader default suspend")
-            end
+            return _("Status: Always uses RTC deep sleep (most efficient)")
         end,
         keep_menu_open = true,
         callback = function() end,
@@ -1131,34 +1104,10 @@ function DtDisplay:getSuspendMenuList()
     return menu_list
 end
 
---- Save suspend settings
+--- Save power settings
 function DtDisplay:saveSuspendSettings()
     self.local_storage:reset(self.settings)
     self.local_storage:flush()
-end
-
---- Show spin widget for suspend timeout
-function DtDisplay:showSuspendTimeoutSpinWidget(touchmenu_instance)
-    local SpinWidget = require("ui/widget/spinwidget")
-    local current_value = self.settings.suspend.custom_timeout_minutes or 60
-    UIManager:show(
-        SpinWidget:new {
-            value = current_value,
-            value_min = 1,
-            value_max = 480,
-            value_step = 1,
-            value_hold_step = 10,
-            ok_text = _("Set timeout"),
-            title_text = _("Suspend timeout (minutes)"),
-            callback = function(spin)
-                self.settings.suspend.custom_timeout_minutes = spin.value
-                self:saveSuspendSettings()
-                if touchmenu_instance then
-                    touchmenu_instance:updateItems()
-                end
-            end
-        }
-    )
 end
 
 --- Get the recommended resolution string based on current screen size
@@ -1846,6 +1795,12 @@ function DtDisplay:patchScreensaver()
             screensaver_instance.screensaver_type = "dtdisplay"
             logger.dbg("DtDisplay: Clock screensaver activated")
 
+            -- Capture original rotation before screensaver changes it!
+            if not plugin_instance.original_rotation then
+                plugin_instance.original_rotation = Screen:getRotationMode()
+                logger.info("DtDisplay: Captured original rotation mode before sleep:", plugin_instance.original_rotation)
+            end
+
             -- Schedule periodic refresh when screen locks
             plugin_instance:schedulePeriodicRefresh()
 
@@ -1897,6 +1852,20 @@ function DtDisplay:patchScreensaver()
                 }
                 screensaver_instance.screensaver_widget.modal = true
                 screensaver_instance.screensaver_widget.dithered = true
+
+                -- Wrap onCloseWidget to restore original rotation mode
+                local orig_onCloseWidget = screensaver_instance.screensaver_widget.onCloseWidget
+                screensaver_instance.screensaver_widget.onCloseWidget = function(this)
+                    logger.dbg("DtDisplay: screensaver_widget onCloseWidget called")
+                    if plugin_instance.original_rotation then
+                        logger.info("DtDisplay: Restoring original rotation mode on screensaver close:", plugin_instance.original_rotation)
+                        Screen:setRotationMode(plugin_instance.original_rotation)
+                        plugin_instance.original_rotation = nil
+                    end
+                    if orig_onCloseWidget then
+                        orig_onCloseWidget(this)
+                    end
+                end
 
                 UIManager:show(screensaver_instance.screensaver_widget, "full")
                 logger.dbg("DtDisplay: Widget displayed")
@@ -1962,13 +1931,6 @@ end
 function DtDisplay:onResume()
     logger.dbg("DtDisplay: Device resuming")
 
-    -- Cancel any pending RTC suspend timers immediately upon resume!
-    if self.suspend_timer then
-        UIManager:unschedule(self.suspend_timer)
-        self.suspend_timer = nil
-        logger.info("DtDisplay: Cancelled screensaver suspend timer on manual resume")
-    end
-
     -- Check if we woke up due to an RTC alarm and execute the action
     if self.simulated_wakeup then
         -- Cancel any existing RTC wakeup
@@ -1990,18 +1952,19 @@ function DtDisplay:onResume()
             end
         end)
 
-        -- Trigger suspend again after refresh completes
-        UIManager:scheduleIn(5, function()
-            logger.info("DtDisplay: Triggering suspend after refresh")
-            local Powerd = Device:getPowerDevice()
-            if Powerd and Powerd.toggleSuspend then
-                Powerd:toggleSuspend()
-            elseif Device.suspend then
-                Device:suspend()
-            end
+        -- Release wake lock after refresh completes; let KOReader suspend naturally
+        local wake_dur = (self.settings and self.settings.wake_duration) or 0.5
+        UIManager:scheduleIn(wake_dur + 2, function()
+            logger.info("DtDisplay: Releasing wake lock after Kindle refresh")
+            SystemUtils.turnOffKeepAwake()
         end)
     else
         logger.dbg("DtDisplay: Manual wakeup, not from RTC alarm")
+        if self.original_rotation then
+            logger.info("DtDisplay: Restoring original rotation mode on manual resume:", self.original_rotation)
+            Screen:setRotationMode(self.original_rotation)
+            self.original_rotation = nil
+        end
     end
 end
 
@@ -2011,6 +1974,12 @@ function DtDisplay:onCloseWidget()
         logger.dbg("DtDisplay: Cancelling RTC periodic refresh on close")
         self.wakeup_mgr:removeTasks(nil, self.rtcRefreshCallback)
         self.rtc_wakeup_scheduled = false
+    end
+
+    if self.original_rotation then
+        logger.info("DtDisplay: Restoring original rotation mode on plugin close:", self.original_rotation)
+        Screen:setRotationMode(self.original_rotation)
+        self.original_rotation = nil
     end
 end
 

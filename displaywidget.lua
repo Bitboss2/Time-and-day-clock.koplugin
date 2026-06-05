@@ -2,28 +2,30 @@
 --
 -- Clock display widget with proper RTC-based standby for Kobo e-readers.
 --
--- ARCHITECTURE (Fixed version)
--- ============================
+-- ARCHITECTURE (v6)
+-- =================
 -- The old implementation had critical bugs:
 --   1. Timer accumulation: autoRefresh() never unscheduled old timers
---   2. setAutoSuspend(1) death spiral: KOReader tried to suspend every second
---   3. No WakeupMgr integration: direct sysfs writes conflicted with KOReader
+--   2. setAutoSuspend(1/5) death spiral: KOReader kept waking to check
+--   3. Explicit UIManager:suspend() calls fought with KOReader's AutoSuspend
 --   4. keepAwake/turnOffKeepAwake race conditions
 --
--- The new implementation:
+-- The current implementation:
 --   - Uses WakeupMgr (or sysfs fallback) for RTC scheduling
 --   - Always unschedules previous timers before creating new ones
---   - Lets KOReader's AutoSuspend handle deep sleep naturally
---   - Only holds the wake lock during the brief render phase (~0.5s)
+--   - Does NOT modify KOReader's AutoSuspend timeout at all
+--   - Does NOT call UIManager:suspend() — lets KOReader handle it naturally
+--   - Only holds the wake lock during the brief render phase (configurable)
 --   - On resume from RTC alarm: render → schedule next alarm → release wake lock
 --   - Target consumption: ~4-5% per day on Kobo Aura 2
 --
 -- CYCLE (per-minute updates):
 --   1. RTC fires → KOReader calls onResume()
 --   2. onResume() acquires wake lock, renders clock, schedules next RTC alarm
---   3. After 0.5s, releases wake lock → KOReader's AutoSuspend enters deep sleep
---   4. ~59.5 seconds of deep sleep (CPU off, only RTC active)
---   5. Go to step 1
+--   3. After wake_duration (default 0.5s), releases wake lock
+--   4. KOReader's AutoSuspend enters deep sleep naturally
+--   5. ~59.5 seconds of deep sleep (CPU off, only RTC active)
+--   6. Go to step 1
 
 local Blitbuffer     = require("ffi/blitbuffer")
 local Date           = os.date
@@ -247,61 +249,46 @@ function DisplayWidget:init()
             -- Step 2: Determine how long to sleep until the next minute
             local sleep_seconds = SystemUtils.secondsUntilNextMinute(2)
 
-            local never_suspend = self.props and self.props.suspend and self.props.suspend.never_suspend
+            -- Configurable wake duration: how long the CPU stays awake after
+            -- updating the screen before the wake lock is released. Some
+            -- e-readers need a longer duration for the e-ink pipeline to flush.
+            local wake_duration = (self.props and self.props.wake_duration) or 0.5
 
-            if never_suspend then
-                -- Mode "never suspend": simple UIManager timer, device stays awake
+            -- ==================================================================
+            -- RTC deep sleep (the only power-saving mode)
+            -- ==================================================================
+            -- Schedule RTC wakeup via WakeupMgr (preferred) or sysfs fallback.
+            -- After the wake lock is released, KOReader's AutoSuspend naturally
+            -- puts the device to sleep. We do NOT call UIManager:suspend()
+            -- explicitly — that fights with KOReader's own suspend management.
+            -- ==================================================================
+            local rtc_ok = SystemUtils.scheduleRtcWakeup(sleep_seconds, function()
+                logger.dbg("DisplayWidget: WakeupMgr callback triggered")
+            end)
+
+            if rtc_ok then
+                -- Release the wake lock after the configured wake duration.
+                -- Once released, KOReader's AutoSuspend handles deep sleep.
+                self:_unscheduleTimer()
+                self.clock_timer = UIManager:scheduleIn(wake_duration, function()
+                    if self.is_closing then return end
+                    SystemUtils.turnOffKeepAwake()
+                    self._schedule_guard = false
+                end)
+            else
+                -- RTC unavailable: fallback to simple UIManager timer
+                -- (higher battery consumption, but functional)
+                logger.warn("DisplayWidget: RTC wakeup unavailable, using timer fallback")
                 self:_unscheduleTimer()
                 self.clock_timer = UIManager:scheduleIn(sleep_seconds - 2 + 0.5, function()
                     self._schedule_guard = false
                     if not self.is_closing then self:autoRefresh() end
                 end)
-            else
-                -- ==================================================================
-                -- Mode "RTC deep sleep" (the correct power-saving mode for Kobo)
-                -- ==================================================================
-                -- Step 3a: Schedule RTC wakeup via WakeupMgr (preferred) or sysfs
-                local rtc_ok = SystemUtils.scheduleRtcWakeup(sleep_seconds, function()
-                    -- This callback is executed by WakeupMgr when the RTC fires.
-                    -- On Kobo, WakeupMgr fires this during the onResume path.
-                    logger.dbg("DisplayWidget: WakeupMgr callback triggered")
-                end)
-
-                if rtc_ok then
-                    -- Step 3b: Release the wake lock immediately after rendering
-                    -- We yield the UI thread for just 0.05s to allow KOReader's
-                    -- internal event loop to process the draw call before sleeping.
-                    self:_unscheduleTimer()
-                    self.clock_timer = UIManager:scheduleIn(0.05, function()
-                        if self.is_closing then return end
-                        -- Release wake lock → KOReader's AutoSuspend can now enter deep sleep
-                        SystemUtils.turnOffKeepAwake()
-                        self._schedule_guard = false
-                        -- CRITICAL: Explicitly force suspend so the device enters
-                        -- Deep Sleep immediately instead of waiting for AutoSuspend.
-                        self.suspend_timer = UIManager:scheduleIn(0.5, function()
-                            self.suspend_timer = nil
-                            if not self.is_closing then
-                                UIManager:suspend()
-                            end
-                        end)
-                    end)
-                else
-                    -- RTC unavailable: fallback to simple UIManager timer
-                    -- (higher battery consumption, but functional)
-                    logger.warn("DisplayWidget: RTC wakeup unavailable, using timer fallback")
-                    self:_unscheduleTimer()
-                    self.clock_timer = UIManager:scheduleIn(sleep_seconds - 2 + 0.5, function()
-                        self._schedule_guard = false
-                        if not self.is_closing then self:autoRefresh() end
-                    end)
-                end
             end
         end
     end
 
     -- Tap/Touch close handling
-    local power_hook_enabled = self.props and self.props.suspend and self.props.suspend.launch_on_power_button
     if not self.is_screensaver then
         local fullscreen_range = Geom:new {
             x = 0, y = 0,
@@ -311,11 +298,9 @@ function DisplayWidget:init()
 
         self.ges_events = self.ges_events or {}
 
-        if not power_hook_enabled then
-            self.ges_events.TapClose = {
-                GestureRange:new { ges = "tap", range = fullscreen_range }
-            }
-        end
+        self.ges_events.TapClose = {
+            GestureRange:new { ges = "tap", range = fullscreen_range }
+        }
 
         -- Hold gesture to launch full-screen customizer
         self.ges_events.HoldToEdit = {
@@ -355,27 +340,16 @@ function DisplayWidget:init()
 
     if not self.is_screensaver then
         -- ========================================================================
-        -- AutoSuspend Setup
+        -- AutoSuspend: DO NOT modify KOReader's AutoSuspend timeout.
         -- ========================================================================
-        -- CRITICAL FIX: We no longer set autoSuspend to 3600 seconds.
-        -- Instead, we set AutoSuspend to 5 seconds. The clock manages its own
-        -- sleep cycle via RTC alarms and explicitly forces a suspend via UIManager,
-        -- but this ensures KOReader's backend timeout is short enough to sleep.
+        -- We save the original value only so we can restore it on close as a
+        -- safety net, but we no longer change it. KOReader's own AutoSuspend
+        -- will naturally put the device to sleep after we release the wake lock.
+        -- This avoids the 5-second polling loop that was draining battery.
         -- ========================================================================
         local autosuspend = PluginShare.live_autosuspend
         if autosuspend then
             self.original_autosuspend_timeout = autosuspend.auto_suspend_timeout_seconds
-        end
-
-        local never_suspend = self.props and self.props.suspend and self.props.suspend.never_suspend
-        if never_suspend then
-            -- "Never suspend" mode: disable AutoSuspend entirely
-            SystemUtils.setAutoSuspend(0)
-        else
-            -- Normal RTC mode: set AutoSuspend to a very short timeout so
-            -- the device enters Deep Sleep almost immediately after we release
-            -- the wake lock. 5 seconds is enough for the e-ink pipeline to flush.
-            SystemUtils.setAutoSuspend(5)
         end
 
         -- Hold the wake lock during the initial render phase
@@ -838,22 +812,15 @@ function DisplayWidget:onResume()
 
     -- Cancel any pending timer and schedule guard
     self:_unscheduleTimer()
-    if self.suspend_timer then
-        UIManager:unschedule(self.suspend_timer)
-        self.suspend_timer = nil
-    end
     self._schedule_guard = false
 
     -- Cancel any pending RTC alarm (we'll reschedule after rendering)
     SystemUtils.cancelRtcWakeup()
 
-    -- Small stabilization delay reduced from 0.3s to 0.05s to save battery
-    self.clock_timer = UIManager:scheduleIn(0.05, function()
-        if self.is_closing then return end
-
-        -- Render the clock and schedule next RTC alarm
+    -- Render the clock immediately and schedule next RTC alarm
+    if not self.is_closing then
         self:autoRefresh()
-    end)
+    end
 end
 
 -- ========================================================================
@@ -906,21 +873,19 @@ function DisplayWidget:onTapClose()
     -- Step 3: Restore rotation
     self:restoreRotation()
 
-
-
-    -- Step 7: Restore brightness
+    -- Step 4: Restore brightness
     if self.original_brightness then
         SystemUtils.setBrightness(self.original_brightness)
         self.original_brightness = nil
     end
 
-    -- Step 8: Restore AutoSuspend (CRITICAL - was missing in old code)
+    -- Step 5: Restore AutoSuspend (safety net)
     SystemUtils.restoreAutoSuspend()
 
-    -- Step 9: Release wake lock
+    -- Step 6: Release wake lock
     SystemUtils.turnOffKeepAwake()
 
-    -- Step 10: Close the widget
+    -- Step 7: Close the widget
     UIManager:close(self)
 
     -- Notify the plugin that the clock is closed
@@ -930,13 +895,10 @@ function DisplayWidget:onTapClose()
     end
 end
 
--- Close via POWER is handled by the hook in main.lua (event_handlers.Suspend)
+-- Close via any key press (e.g. POWER button)
 DisplayWidget.onAnyKeyPressed = function(self)
     if self.is_screensaver then return end
-    local power_hook_enabled = self.props and self.props.suspend and self.props.suspend.launch_on_power_button
-    if not power_hook_enabled then
-        self:onTapClose()
-    end
+    self:onTapClose()
 end
 
 function DisplayWidget:onCloseWidget()

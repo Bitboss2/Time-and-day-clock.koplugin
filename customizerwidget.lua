@@ -304,27 +304,12 @@ function CustomizerWidget:paintTo(bb, x, y)
                 self.temp_settings.clock_format = val; self:applyAndRefresh()
             end)
         end
-        -- Rotation
+        -- Info label for rotation
         self:drawLabeledRow(bb, x, y, margin, row2_y, "Rot", label_face)
-        local rot = self.temp_settings.rotation
-        local rot_val = rot.follow_koreader and "follow" or (rot.custom_rotation == 90 and "land" or "port")
-        local rots = { { "Port", "port" }, { "Land", "land" }, { "Auto", "follow" } }
-        local rbw = math.floor((content_w - 2*gap) / 3)
-        for i, r in ipairs(rots) do
-            local bx = content_x + (i-1)*(rbw+gap)
-            local sel = (rot_val == r[2])
-            drawRoundedButton(bb, x+bx, y+row2_y, rbw, btn_h, r[1], sel, btn_face, radius)
-            local val = r[2]
-            self:addButton(x+bx, y+row2_y, rbw, btn_h, function()
-                if val == "follow" then
-                    self.temp_settings.rotation.follow_koreader = true
-                else
-                    self.temp_settings.rotation.follow_koreader = false
-                    self.temp_settings.rotation.custom_rotation = (val == "land") and 90 or 0
-                end
-                self:applyAndRefresh()
-            end)
-        end
+        local note_tw = TextWidget:new { text = "Use main menu", face = btn_face, fgcolor = Blitbuffer.COLOR_DARK_GRAY }
+        local note_sz = note_tw:getSize()
+        note_tw:paintTo(bb, x + content_x, y + row2_y + math.floor((btn_h - note_sz.h) / 2))
+        note_tw:free()
 
     elseif self.active_tab == 3 then
         -- Fonts (paginated, 3 per page)
