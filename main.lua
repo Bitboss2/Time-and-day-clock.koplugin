@@ -66,12 +66,17 @@ function DtDisplay:init()
                         end
                         -- Schedule next RTC alarm
                         self:schedulePeriodicRefresh()
-                        -- Release wake lock after the configured wake duration.
-                        -- KOReader's own AutoSuspend will put the device back to sleep.
+                        -- Release wake lock and suspend after the configured wake duration.
                         local wake_dur = (self.settings and self.settings.wake_duration) or 0.5
                         UIManager:scheduleIn(wake_dur, function()
-                            logger.info("DtDisplay: Releasing wake lock after screensaver update")
+                            logger.info("DtDisplay: Releasing wake lock and suspending after screensaver update")
                             SystemUtils.turnOffKeepAwake()
+                            local Powerd = Device:getPowerDevice()
+                            if Powerd and Powerd.toggleSuspend then
+                                Powerd:toggleSuspend()
+                            elseif Device.suspend then
+                                Device:suspend()
+                            end
                         end)
                     else
                         logger.info("DtDisplay: Skipping screensaver redraw on scheduled wakeup")
@@ -88,8 +93,14 @@ function DtDisplay:init()
                     pcall(function() self:schedulePeriodicRefresh() end)
                     local wake_dur = (self.settings and self.settings.wake_duration) or 0.5
                     UIManager:scheduleIn(wake_dur, function()
-                        logger.info("DtDisplay: Releasing wake lock after RTC refresh error")
+                        logger.info("DtDisplay: Releasing wake lock and suspending after RTC refresh error")
                         SystemUtils.turnOffKeepAwake()
+                        local Powerd = Device:getPowerDevice()
+                        if Powerd and Powerd.toggleSuspend then
+                            Powerd:toggleSuspend()
+                        elseif Device.suspend then
+                            Device:suspend()
+                        end
                     end)
                 end
             end)
@@ -1897,19 +1908,28 @@ end
 
 function DtDisplay:schedulePeriodicRefresh()
     -- Cancel any existing RTC wakeup
-    if self.rtc_wakeup_scheduled and self.wakeup_mgr then
-        self.wakeup_mgr:removeTasks(nil, self.rtcRefreshCallback)
+    if self.rtc_wakeup_scheduled then
+        if self.wakeup_mgr then
+            self.wakeup_mgr:removeTasks(nil, self.rtcRefreshCallback)
+        else
+            SystemUtils.cancelRtcWakeup()
+        end
         self.rtc_wakeup_scheduled = false
     end
 
     local interval = SystemUtils.secondsUntilNextMinute(2)
 
     if self.wakeup_mgr then
-        logger.info("DtDisplay: Scheduling RTC-based periodic refresh in", interval, "seconds")
+        logger.info("DtDisplay: Scheduling RTC-based periodic refresh in", interval, "seconds using WakeupMgr")
         self.wakeup_mgr:addTask(interval, self.rtcRefreshCallback)
         self.rtc_wakeup_scheduled = true
     else
-        logger.warn("DtDisplay: WakeupMgr not available")
+        logger.info("DtDisplay: Scheduling RTC-based periodic refresh in", interval, "seconds using sysfs fallback")
+        if SystemUtils.scheduleRtcWakeup(interval) then
+            self.rtc_wakeup_scheduled = true
+        else
+            logger.warn("DtDisplay: RTC wakeup not available")
+        end
     end
 end
 
@@ -1931,11 +1951,22 @@ end
 function DtDisplay:onResume()
     logger.dbg("DtDisplay: Device resuming")
 
-    -- Check if we woke up due to an RTC alarm and execute the action
-    if self.simulated_wakeup then
+    -- Check if we woke up due to an RTC alarm
+    local is_rtc_wakeup = false
+    if Device:isKobo() then
+        is_rtc_wakeup = Device.screen_saver_mode == true
+    else
+        is_rtc_wakeup = self.simulated_wakeup == true
+    end
+
+    if is_rtc_wakeup then
         -- Cancel any existing RTC wakeup
-        if not Device:isKobo() and self.rtc_wakeup_scheduled and self.wakeup_mgr then
-            self.wakeup_mgr:removeTasks(nil, self.rtcRefreshCallback)
+        if self.rtc_wakeup_scheduled then
+            if self.wakeup_mgr then
+                self.wakeup_mgr:removeTasks(nil, self.rtcRefreshCallback)
+            else
+                SystemUtils.cancelRtcWakeup()
+            end
             self.rtc_wakeup_scheduled = false
         end
 
@@ -1943,24 +1974,34 @@ function DtDisplay:onResume()
         self.simulated_wakeup = false
         logger.info("DtDisplay: Woke up from scheduled RTC alarm")
 
-        -- Schedule redraw on Kindle UI loop
-        UIManager:scheduleIn(0, function()
-            local Screensaver = require("ui/screensaver")
-            local ss_type = G_reader_settings:readSetting("screensaver_type")
-            if Device.screen_saver_mode and ss_type == "dtdisplay" then
-                Screensaver:show()
+        if Device:isKobo() then
+            -- For Kobo, if WakeupMgr is not available, we trigger the refresh callback manually.
+            -- If WakeupMgr is available, it triggers it automatically, so we do nothing here.
+            if not self.wakeup_mgr then
+                UIManager:scheduleIn(0, function()
+                    self.rtcRefreshCallback()
+                end)
             end
-        end)
+        else
+            -- For Kindle, schedule redraw on Kindle UI loop
+            UIManager:scheduleIn(0, function()
+                local Screensaver = require("ui/screensaver")
+                local ss_type = G_reader_settings:readSetting("screensaver_type")
+                if Device.screen_saver_mode and ss_type == "dtdisplay" then
+                    Screensaver:show()
+                end
+            end)
 
-        -- Release wake lock after refresh completes; let KOReader suspend naturally
-        local wake_dur = (self.settings and self.settings.wake_duration) or 0.5
-        UIManager:scheduleIn(wake_dur + 2, function()
-            logger.info("DtDisplay: Releasing wake lock after Kindle refresh")
-            SystemUtils.turnOffKeepAwake()
-        end)
+            -- Release wake lock after refresh completes; let KOReader suspend naturally
+            local wake_dur = (self.settings and self.settings.wake_duration) or 0.5
+            UIManager:scheduleIn(wake_dur + 2, function()
+                logger.info("DtDisplay: Releasing wake lock after Kindle refresh")
+                SystemUtils.turnOffKeepAwake()
+            end)
+        end
     else
         logger.dbg("DtDisplay: Manual wakeup, not from RTC alarm")
-        if self.original_rotation then
+        if not Device.screen_saver_mode and self.original_rotation then
             logger.info("DtDisplay: Restoring original rotation mode on manual resume:", self.original_rotation)
             Screen:setRotationMode(self.original_rotation)
             self.original_rotation = nil
