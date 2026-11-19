@@ -1,0 +1,77 @@
+{
+  "sessions": [
+    {
+      "source": "diagnostic(1).json",
+      "version": "0.2.4-beta.8",
+      "start": "2026-10-31T22:14:20+01:00",
+      "end_exclusive": "2026-11-01T15:00:45+01:00",
+      "duration_s": 60385,
+      "battery_drop_points": 7,
+      "gauge_points_per_hour": 0.4173221826612569,
+      "rtc_cycles_exported": 1006,
+      "session_cycles_from_export_delta": 1006,
+      "rtc_render_errors": 0,
+      "rtc_lag_s": 0,
+      "native_log_counts": {
+        "native_preparations": 3021,
+        "native_rtc_dispatches": 1006,
+        "mem_refusals": 2014
+      },
+      "standby_calls": 1,
+      "standby_disabled_reason": "Veille profonde refusée après décharge",
+      "standby_samples": [
+        {
+          "requested_s": 5,
+          "native_phase_s": 4.7588819991797,
+          "native_phase_awake_s": 0.6088410000084,
+          "at": 1793481310,
+          "kernel_sleep_s": 4.1500409991713
+        }
+      ],
+      "kernel_clock_sleep_percent": 81.349310326006
+    },
+    {
+      "source": "last-session(1).json",
+      "version": "0.2.4-beta.8",
+      "start": "2026-11-01T15:06:10+01:00",
+      "end_exclusive": "2026-11-01T19:02:51+01:00",
+      "duration_s": 14201,
+      "battery_drop_points": 4,
+      "gauge_points_per_hour": 1.0140130976691781,
+      "rtc_cycles_exported": 1242,
+      "session_cycles_from_export_delta": 236,
+      "rtc_render_errors": 0,
+      "rtc_lag_s": 0,
+      "native_log_counts": {
+        "native_preparations": 694,
+        "native_rtc_dispatches": 236,
+        "mem_refusals": 458
+      },
+      "standby_calls": 1,
+      "standby_disabled_reason": "Veille profonde refusée après décharge",
+      "standby_samples": [
+        {
+          "requested_s": 2,
+          "native_phase_s": 1.5431180000305,
+          "native_phase_awake_s": 0.58019999999669,
+          "at": 1793542085,
+          "kernel_sleep_s": 0.96291800003382
+        }
+      ],
+      "kernel_clock_sleep_percent": 82.827985332918
+    }
+  ],
+  "sevenfold_validated": false,
+  "battery_gauge_is_not_an_electrical_measurement": true,
+  "findings": [
+    "Both sessions try the short bridge once, then fall back after a deep refusal.",
+    "Beta8 counters accumulate across sessions; second export has 1242 lifetime RTC cycles, 236 in that session.",
+    "Installed kernel is Linux 3.0.35+, model Kobo_star; FP9928 VEE refusal remains confirmed."
+  ],
+  "long_refusal_evidence": {
+    "at": "2026-11-01T18:24:03+01:00",
+    "native_call_s": 4.46961,
+    "native_guard_delay_s": 15,
+    "log_confirms_mem_refusal": true
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "cycles": 186,
+  "rows": [
+    {
+      "bridge": false,
+      "elapsed_s": 11160.799499988556,
+      "verified_sleep_percent": 81.75930904120237,
+      "verified_awake_s": 2035.806945323944,
+      "mem_calls": 556,
+      "short_returns": 370,
+      "standby_calls": 0,
+      "sync_calls": 556
+    },
+    {
+      "bridge": true,
+      "elapsed_s": 11160.799499988556,
+      "verified_sleep_percent": 93.02955921404951,
+      "verified_awake_s": 777.9569203853607,
+      "mem_calls": 371,
+      "short_returns": 185,
+      "standby_calls": 185,
+      "sync_calls": 371
+    }
+  ],
+  "hardware_measured": false,
+  "energy_validated": false,
+  "assumptions": {
+    "epdc_poweroff_s": 0.5,
+    "vee_settle_s": 6.5,
+    "screen_wait_s": 0.5935,
+    "wake_margin_s": 0.5,
+    "render_s": 0.006,
+    "sync_s": 0.1,
+    "refusal_s": 0.2,
+    "success_kernel_active_cost_s": 0,
+    "standby_native_pre_delay_s": 0.09
+  },
+  "warning": "Controlled native KOReader power functions with simulated peripherals; not an electrical or full kernel simulation."
+}
