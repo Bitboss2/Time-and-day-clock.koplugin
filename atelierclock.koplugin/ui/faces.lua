@@ -270,7 +270,9 @@ function M.install(S)
         local ratio=self.app.device.screen:getWidth()/self.app.device.screen:getHeight()
         if self.draft.rotation~="follow"then ratio=tonumber(self.draft.rotation)%2==1 and 1024/758 or 758/1024 end
         local pw=math.floor(math.min(w,h*ratio));local ph=math.floor(pw/ratio);local px=math.floor(x+(w-pw)/2);local py=math.floor(y+(h-ph)/2)
-        if not self.preview then self.preview=Scene.new(self.app,self.app:face(self.draft.face),self.draft,pw,ph);self.preview:render(os.time())end
+        local size=pw.."x"..ph
+        if self.preview and self.preview_size~=size then self:dropPreview()end
+        if not self.preview then self.preview=Scene.new(self.app,self.app:face(self.draft.face),self.draft,pw,ph);self.preview:render(os.time());self.preview_size=size end
         D.round(bb,px+3*self.k,py+6*self.k,pw,ph,12*self.k,Kit.shade)
         self.preview:paintTo(bb,px,py);D.roundBorder(bb,px-1,py-1,pw+2,ph+2,10*self.k,0,2)
         self.preview_box={x=px,y=py+self.top-self.scroll:value(),w=pw,h=ph}
@@ -422,7 +424,7 @@ function M.install(S)
                 kit:button(bb,p,y,w-2*p,50*k,"Time zone: "..zone,{style="soft",icon="globe"})
                 self:region(p,y,w-2*p,50*k,function()
                     for i,z in ipairs(C.zones)do if z==zone then zone=C.zones[i%#C.zones+1];break end end
-                    item.slots[slot_id]={provider="world",zone=zone};self:markDirty();self:buildSheet();self.preview=nil;self:refresh()
+                    item.slots[slot_id]={provider="world",zone=zone};self:markDirty();self:buildSheet();self:refresh()
                 end,{zone=zone})
             end
         end,on_close=function()self.slot_picker=nil end}

@@ -255,6 +255,7 @@ function M.install(S)
             {"Resolution",self.w.." × "..self.h},
             {"Display",info.label},{"Engine profile",info.detail or "—"},
             {"Targets / scans per second",r.publish and string.format("%.1f / %.1f",r.publish,r.scans or 0)or "Engine idle"},
+            {"Frame build",self.compose_ms and string.format("%.1f ms",self.compose_ms)or "—"},
             {"Engine CPU",r.cpu and string.format("%.0f %%",r.cpu)or "—"},
             {"Scheduled wake-up",load("power/capabilities").detect(a.device).label},
             {"Last render",a.metrics.last and os.date("%H:%M:%S",a.metrics.last)or "None"},
@@ -371,7 +372,10 @@ function M.install(S)
         local r=self.draft.rotation=="follow"and self.app.device.screen:getRotationMode()or tonumber(self.draft.rotation)
         local aspect=r%2==1 and 1024/758 or 758/1024;local rw=math.min(w,h*aspect);local rh=rw/aspect
         x=x+(w-rw)/2;y=y+(h-rh)/2;w=math.floor(rw);h=math.floor(rh)
+        local size=w.."x"..h
+        if self.preview and self.preview_size~=size then self:dropPreview()end
         if not self.preview then
+            self.preview_size=size
             self.preview=Scene.new(self.app,self.app:face(self.draft.face),self.draft,w,h)
             local ok,e=pcall(self.preview.render,self.preview,os.time());if not ok then self.status=tostring(e)end
         end
@@ -459,7 +463,6 @@ function M.install(S)
         local ey=self.draft.units=="percent"and dy/d.box.h*100 or dy/ratio
         self.draft[self.element].x=U.clamp(U.round(d.x+ex),-2000,2000);self.draft[self.element].y=U.clamp(U.round(d.y+ey),-2000,2000)
         self.draft.auto_layout=false;self:markDirty()
-        if self.preview then self.preview:free();self.preview=nil end
         self.content_dirty=true;self.frame_dirty=true
     end
     function S:canvasRelease()self.canvas_drag=nil;self:refresh()end

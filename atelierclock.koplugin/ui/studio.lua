@@ -13,7 +13,10 @@ local Display=load("engine/display")
 local BB=require("ffi/blitbuffer")
 local Geom=require("ui/geometry")
 local GestureRange=require("ui/gesturerange")
-local Studio=load("ui/studio_actions"):extend{covers_fullscreen=true,modal=true}
+-- Same widget flags as Fluid Ink's own demo: every gesture stays here.
+local Studio=load("ui/studio_actions"):extend{covers_fullscreen=true,modal=true,
+    stop_events_propagation=true,disable_double_tap=true,dithered=false}
+local logger=require("logger")
 -- Internal tab keys stay stable (settings, tests); the second field is the label.
 local TABS={{"Galerie","Faces","gallery"},{"Composer","Edit","edit"},{"Veille","Sleep","moon"},{"Diagnostic","Diagnostics","pulse"}}
 local function hit(r,x,y)return r and x>=r.x and x<=r.x+r.w and y>=r.y and y<=r.y+r.h end
@@ -106,8 +109,11 @@ function Studio:iconButton(bb,icon,x,y,size,callback,active)
 end
 
 ------------------------------------------------------------------ invalidation
-function Studio:refresh()
+-- The face preview is costly (full scene render): only the draft changes it.
+function Studio:dropPreview()
     if self.preview then self.preview:free();self.preview=nil end
+end
+function Studio:refresh()
     self.content_dirty=true;self.layers.header=nil
     if self.status~=""and self.status~=self.shown_status then self:toast(self.status)end
     self:request()
@@ -206,7 +212,7 @@ function Studio:drawDraftBar(f)
     end
 end
 function Studio:cancelDraft()
-    self.draft=U.copy(self.app.settings.data);self:clearDirty();self:layout()
+    self.draft=U.copy(self.app.settings.data);self:clearDirty();self:layout();self:dropPreview()
     self.status="Changes discarded";self:refresh()
 end
 -- Toasts replace the old status line: short, animated, never blocking.
@@ -287,6 +293,7 @@ end
 
 ------------------------------------------------------------------ frame
 function Studio:compose()
+    local t0=Motion.now()
     if not self.frame or self.frame:getWidth()~=self.w or self.frame:getHeight()~=self.h then
         if self.frame then self.frame:free()end;self.frame=newBB(self.w,self.h)
     end
@@ -311,8 +318,8 @@ function Studio:compose()
             if r.fixed then y=r.y+self.top;y2=y+r.h end
             local cy,cy2=math.max(y,self.top),math.min(y2,self.bottom)
             if cy2-cy>=4 then
-                local c={};for key,v in pairs(r)do c[key]=v end
-                c.y=cy;c.h=cy2-cy;c.content=r;self.regions[#self.regions+1]=c
+                -- Light proxy: only the clipped y/h differ from the content region.
+                self.regions[#self.regions+1]=setmetatable({y=cy,h=cy2-cy,content=r},{__index=r})
             end
         end
     end
@@ -328,20 +335,30 @@ function Studio:compose()
     if self.sheet then self:drawSheet(f)end
     if self.portal then self:drawPortal(f)end
     self.frame_dirty=false
+    local ms=(Motion.now()-t0)*1000
+    self.compose_ms=self.compose_ms and self.compose_ms*.9+ms*.1 or ms
 end
 function Studio:paintTo(bb,x,y)
     if self.frame_dirty or not self.frame or self.content_dirty then self:compose()end
     bb:blitFrom(self.frame,x or 0,y or 0,0,0,self.w,self.h)
     if not self.started_display then
         self.started_display=true
-        self.app.ui:scheduleIn(.15,function()if not self.closed then self.display:start()end end)
+        self.app.ui:scheduleIn(.15,function()
+            if self.closed then return end
+            if not self.display:start()and self.display.state=="classic"and self.display:compatible()
+                and self.draft.display_engine~="classic"then
+                -- Say plainly why a Fluid Ink reader is on the classic display.
+                self:toast("Classic display: "..tostring(self.display.profile.detail));self:request()
+            end
+        end)
     end
 end
 
 ------------------------------------------------------------------ presentation
 function Studio:presentClassic(moving)
     if self.closed then return end
-    if self.display and self.display.state=="fluid"then return end
+    -- Never ask KOReader to refresh while a Fluid Ink worker exists.
+    if self.display and self.display:ownsScreen()then return end
     self.app.ui:setDirty(self,moving and "fast"or "ui")
 end
 function Studio:present(moving)
@@ -419,11 +436,14 @@ end
 function Studio:onDisplay(state)
     if self.closed then return end
     if state=="fluid"then
+        self:toast("Fluid engine on · "..tostring(self.display.profile.label))
         self.content_dirty=true;self.layers.header=nil;self:compose();self.display:publish(self.frame,false)
+        if self:animated()then self:kick()end
         self.app.ui:unschedule(self.watch_action);self.app.ui:scheduleIn(1,self.watch_action)
     elseif state=="classic"then
         local notice=self.display.notice
-        if notice and not self.display.notice_quiet and notice~=self.last_display_notice then
+        if notice and not self.display.notice_quiet and notice~=self.last_display_notice
+            and(self.display:compatible()or self.draft.display_engine=="fluid")then
             self.last_display_notice=notice;self:toast(notice)
         end
         if self.ticking then self:finishAnimations()end
@@ -762,7 +782,8 @@ function Studio:onSuspend()
 end
 function Studio:onResume()
     if self.closed then return end
-    self.app.ui:scheduleIn(.6,function()if not self.closed then self.display:wake()end end)
+    -- Let KOReader close the screensaver and finish its refresh first.
+    self.app.ui:scheduleIn(1.5,function()if not self.closed then self.display:wake()end end)
 end
 function Studio:onSetRotationMode()
     self.display:release(function()
@@ -788,4 +809,34 @@ end
 
 load("ui/views").install(Studio)
 load("ui/faces").install(Studio)
+
+-- Like Fluid Ink's demo, no error may escape while a worker owns the panel:
+-- release it, close the studio and say why, instead of crashing KOReader.
+function Studio:fatal(err)
+    if self.fatal_seen then return end
+    self.fatal_seen=true
+    local text=tostring(err)
+    logger.err("AtelierClock studio:",text)
+    pcall(function()self.display:log("fatal",text:sub(1,800))end)
+    self.ticking=false
+    pcall(function()self.app.ui:unschedule(self.tick_action);self.app.ui:unschedule(self.watch_action)end)
+    pcall(function()self.display.closed=true;self.display:releaseNow(false)end)
+    local first=text:match("^[^\n]*")or text
+    self.app.ui:nextTick(function()
+        pcall(self.app.ui.close,self.app.ui,self,"full")
+        pcall(function()
+            local InfoMessage=require("ui/widget/infomessage")
+            self.app.ui:show(InfoMessage:new{text="Atelier Clock closed after an error:\n"..first:sub(1,300)})
+        end)
+    end)
+end
+for _,name in ipairs({"tick","watch","paintTo","onTouch","onTap","onHold","onPan","onPanRelease","onSwipe",
+    "onBack","onDisplay","onResume","onSuspend","onSetRotationMode"})do
+    local original=Studio[name]
+    Studio[name]=function(self,...)
+        local result={xpcall(original,debug.traceback,self,...)}
+        if result[1]then return unpack(result,2)end
+        self:fatal(result[2]);return true
+    end
+end
 return Studio

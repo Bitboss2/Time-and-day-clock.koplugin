@@ -37,6 +37,8 @@ test_05_text_entry_hands_the_panel_back_then_resumes (test_fluid_ui.FluidStudioT
 test_06_suspend_resume_pulses_refused_watchdog (test_fluid_ui.FluidStudioTests.test_06_suspend_resume_pulses_refused_watchdog) ... ok
 test_07_reduced_motion_and_switch_animation (test_fluid_ui.FluidStudioTests.test_07_reduced_motion_and_switch_animation) ... ok
 test_08_fluid_frames_screenshots (test_fluid_ui.FluidStudioTests.test_08_fluid_frames_screenshots) ... ok
+test_09_no_koreader_refresh_while_a_worker_exists (test_fluid_ui.FluidStudioTests.test_09_no_koreader_refresh_while_a_worker_exists) ... ok
+test_10_errors_release_the_worker_and_close_the_studio (test_fluid_ui.FluidStudioTests.test_10_errors_release_the_worker_and_close_the_studio) ... ok
 test_alarm_exception_restores_existing_hook (test_pmic_settle.AlarmTests.test_alarm_exception_restores_existing_hook) ... ok
 test_single_programming_and_refusal_detection (test_pmic_settle.AlarmTests.test_single_programming_and_refusal_detection) ... ok
 test_240_minutes_with_frozen_driver_timer_avoids_deep_retry_loop (test_pmic_settle.ComparisonTests.test_240_minutes_with_frozen_driver_timer_avoids_deep_retry_loop) ... ok
@@ -169,6 +171,6 @@ test_23_main_plugin_two_contexts_share_one_service (test_runtime.AtelierTests.te
 test_24_native_kobo_guard_and_resuspend_coordination (test_runtime.AtelierTests.test_24_native_kobo_guard_and_resuspend_coordination) ... ok
 
 ----------------------------------------------------------------------
-Ran 169 tests in 17.930s
+Ran 171 tests in 17.215s
 
 OK

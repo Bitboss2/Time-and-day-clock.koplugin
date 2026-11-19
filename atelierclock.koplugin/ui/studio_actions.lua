@@ -8,6 +8,7 @@ function Studio:change(key,value,soft)
     if soft then self.frame_dirty=true;self:request()else self:refresh()end
 end
 function Studio:markDirty()
+    self:dropPreview()
     if not self.dirty then self.dirty=true;self.layers.draft=nil end
     self.draft_spring:set(1);if not self:animated()then self.draft_spring:jump(1)end
 end
@@ -49,13 +50,15 @@ function Studio:apply()
     self.status=ok and "Settings saved" or tostring(e)
     if ok then
         self.draft=U.copy(self.app.settings.data);self:clearDirty();self.app.image_lists={};self.app.valid_images={}
-        self:layout()
+        self:layout();self:dropPreview()
         local engine=false
         for key in pairs(DISPLAY)do if before[key]~=self.draft[key]and key~="motion"and key~="display_rest"then engine=true end end
         if engine and self.display then
             self.display:release(function()
                 if self.closed then return end
-                self.display:select();self.display:start();self.frame_dirty=true;self.app.ui:setDirty(self,"full")
+                -- KOReader repaints first; the engine (if any) starts afterwards.
+                self.frame_dirty=true;self.app.ui:setDirty(self,"full");pcall(self.app.ui.forceRePaint,self.app.ui)
+                self.display:select();self.display:start()
             end)
         end
     end

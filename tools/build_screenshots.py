@@ -92,7 +92,7 @@ def main():
         local C=load_module('core/collection');local s=app.settings.data
         for _,id in ipairs({'halo','journal','duplex'})do C.add(s,app:face(id))end
         C.select(s,s.collection[1]);app.settings:save(s)
-        st=studio();run(.3)
+        st=studio();run(3.5)
     ''')
     shots={}
     # Gallery with neighbours peeking.

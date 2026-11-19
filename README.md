@@ -2,7 +2,7 @@
 
 **Sleep-screen clocks for KOReader, with a full-screen studio built for an e-reader that no longer refreshes at 2–3 Hz but at 30 Hz.**
 
-Version **0.3.0 "Fluid"**, 19 November 2026 · [Changelog](CHANGELOG.md) · [Feature checklist](docs/FEATURES.md)
+Version **0.3.1 "Fluid"**, 19 November 2026 · [Changelog](CHANGELOG.md) · [Feature checklist](docs/FEATURES.md)
 
 ![Three Atelier Clock 0.3.0 screens: faces, modules, sleep screen](docs/media/hero.png)
 
@@ -83,6 +83,8 @@ The same section has **Clean the screen** and **Retry the fluid engine**.
 
 > **Pulses 2 on the Aura 2 v1.** The pulse profile needs the waveform copy `factory-reference.bin` from **your own** reader. It is a personal vendor file and this repository does not redistribute it. Copy it from your Fluid Ink 6.5 package (`inkmotion.koplugin/factory-reference.bin`) into `atelierclock.koplugin/engine/fluidink/`. Without it, the Aura 2 v1 switches to **Fluid v6 · no pulses** automatically.
 
+If the engine stays off on a compatible reader, a toast and **Diagnostics → Display → Profile** give the reason, and `settings/atelierclock/fluid.log` records each decision. The worker always dies with KOReader, and any error closes the studio cleanly after releasing the engine.
+
 Real smoothness, contrast and ghosting have to be measured on the panel (see `third_party/fluid-ink/PROTOCOLE_30HZ.md`). The Diagnostics counters report submitted frames and confirmed scans, not optical cadence.
 
 ## RTC wake-up by reader
@@ -127,7 +129,7 @@ PYTHONPATH=tests python -m unittest discover -s tests -p 'test_*.py'
 PYTHONPATH=tests python tools/build_screenshots.py
 ```
 
-The suite has **169 tests**: rendering, power, RTC on all 10 models, the 10-minute profile, the simulated Fluid engine and animations on a deterministic clock. KOReader's plugin validator reports no errors.
+The suite has **171 tests**: rendering, power, RTC on all 10 models, the 10-minute profile, the simulated Fluid engine and animations on a deterministic clock. KOReader's plugin validator reports no errors.
 
 ## Licences
 

@@ -113,6 +113,8 @@ class FluidStudioTests(unittest.TestCase):
             app.ui.dirty={}
             local st=studio();local b=backends[1]
             assert(b.started and b.phase_calls[1][1]==2 and b.phase_calls[1][2]==12,'Impulsions 2 not requested')
+            assert(st.toast_text and st.toast_text:find('Fluid engine on'),'no engine-on notice')
+            run(3.5) -- the notice slides in and out, then the panel rests
             local s=last(b);assert(s.drive_policy==12 and s.phase==2 and s.window==1 and s.dither=='bayer' and s.gamma==false and s.capture)
             assert(s.paused==true,'final frame must be still')
             local dirty=#app.ui.dirty
@@ -164,7 +166,7 @@ class FluidStudioTests(unittest.TestCase):
         self.r.lua.execute(r'''
             local st=studio();local b=backends[1]
             st:onSuspend();assert(b.paused and b.stopped and b.freed and st.display.state=='classic','suspend barrier')
-            st:onResume();run(1);assert(st.display:isFluid()and #backends==2)
+            st:onResume();run(2);assert(st.display:isFluid()and #backends==2)
             local b2=backends[2];b2.stats_t.phase_errno=95
             st.display:check();assert(st.display.profile.name=='fallback' and st.display.profile.phase==0)
             assert(b2.phase_calls[#b2.phase_calls][1]==0,'pulses not disabled')
@@ -191,6 +193,43 @@ class FluidStudioTests(unittest.TestCase):
             st.draft.motion='reduced';assert(not st:animated())
             st:switchTab('Veille');assert(not st.transition,'reduced motion must not slide')
             st:onCloseWidget()
+        ''')
+    def test_09_no_koreader_refresh_while_a_worker_exists(self):
+        self.r.lua.execute(r'''
+            local st=studio();run(3.5)
+            -- Every setDirty must happen while no worker exists.
+            local setDirty=app.ui.setDirty;local violations=0
+            app.ui.setDirty=function(ui,w,...)if st.display.backend then violations=violations+1 end;return setDirty(ui,w,...)end
+            local flushed_before_start=nil
+            local nf=native_factory
+            native_factory=function(...)flushed_before_start=app.ui.repainted;return nf(...)end
+            local fr=app.ui.forceRePaint;function app.ui:forceRePaint()self.repainted=(self.repainted or 0)+1;return fr(self)end
+            st.display.native_factory=native_factory
+            -- Change an engine setting and apply: release, KOReader repaint, relaunch.
+            st:change('display_fps',45);assert(st:apply());run(1)
+            assert(st.display:isFluid()and #backends==2,'engine not relaunched after apply')
+            assert(flushed_before_start and flushed_before_start>=1,'KOReader was not flushed before the worker started')
+            st:switchTab('Veille');run(1);st:refresh();run(1)
+            st:input('Name','A',function()end);run(.2)
+            local dialog=app.ui.shown[#app.ui.shown];dialog.buttons[1][1].callback();run(1)
+            assert(st.display:isFluid(),'not resumed after text entry')
+            assert(violations==0,'KOReader refresh requested while a worker existed: '..violations)
+            app.ui.setDirty=setDirty;st:onCloseWidget()
+        ''')
+    def test_10_errors_release_the_worker_and_close_the_studio(self):
+        self.r.lua.execute(r'''
+            local st=studio();local b=backends[1]
+            app.ui.shown={st}
+            st.compose=function()error('boom in compose')end
+            st:switchTab('Veille');run(.5)
+            assert(b.stopped and b.freed,'worker survived an error')
+            assert(st.closed,'studio not closed after a fatal error')
+            assert(st.display.state=='classic' and not st.display.backend)
+            -- a gesture handler error is contained too
+            local st2=studio();local b2=backends[#backends]
+            st2.hitRegion=function()error('boom in tap')end
+            assert(st2:onTap(nil,{pos={x=10,y=10}})==true)
+            run(.2);assert(b2.freed and st2.closed)
         ''')
     def test_08_fluid_frames_screenshots(self):
         lua=self.r.lua

@@ -1,11 +1,40 @@
 # Changelog
 
-This document compares **Atelier Clock 0.3.0** with the **latest version published on GitHub**, *Time & Day* (`dtdisplay`, commit `58930ab`). Changes are grouped by origin:
+This document compares **Atelier Clock 0.3.x** with the **latest version published on GitHub**, *Time & Day* (`dtdisplay`, commit `58930ab`). Changes are grouped by origin:
 
 - **Part A**: the Atelier Clock work up to **0.2.5-beta.9**, the archive used as the base.
 - **Part B**: **0.3.0**, which rebuilds the interface for 30 Hz, integrates Fluid Ink, adds multi-reader RTC, an English interface and the 10-minute refresh.
 
 Part C maps every *Time & Day* feature to its current equivalent.
+
+---
+
+## 0.3.1 — fixes after the first test on a Kobo Aura 2
+
+The first reader test of 0.3.0 found three problems:
+
+- the fluid engine was not used by default;
+- turning it on crashed KOReader;
+- afterwards, taps and scrolls opened books from the home screen while the studio was still visible.
+
+0.3.1 addresses the causes found in the code. None of these fixes has been checked on hardware yet.
+
+- **The worker can no longer outlive KOReader.** The Fluid Ink worker is a separate process. If KOReader crashed or restarted, it kept painting the studio's last frame over the file browser underneath, so taps reached the books while the screen still showed the studio. The worker is now started with `prctl(PR_SET_PDEATHSIG, SIGKILL)` and dies with KOReader.
+- **No error can escape the studio any more**, as in Fluid Ink's own demo. Every animation tick, health check, repaint and gesture handler is guarded. On an error, the worker is stopped and the original waveform restored, the studio closes, and a message explains why.
+- **KOReader and the worker never refresh the panel at the same time:**
+  - pending KOReader paints and refreshes are flushed and waited for (`forceRePaint`, `waitForVSync`) before the worker starts;
+  - nothing asks KOReader to refresh while a worker exists;
+  - when engine settings are applied, KOReader now repaints *before* the engine starts. The old order caused a full KOReader refresh on top of a running worker, which matches the crash seen when switching to "Fluid";
+  - after a wake-up, the engine waits 1.5 s for KOReader to close the sleep screen.
+- **Fluid by default:** the studio no longer adds orientation or night-mode conditions of its own on top of Fluid Ink; the engine decides what it supports, like the demo does. The studio also says what happens:
+  - a toast confirms "Fluid engine on · Fluid 30 Hz · Pulses 2";
+  - on a compatible reader that stays on the classic display, a toast gives the reason.
+- **Same widget flags as the demo:** `stop_events_propagation`, `disable_double_tap` and `dithered = false`.
+- **Faster classic display:** the face preview is no longer re-rendered on every tap, only when the draft or its size changes.
+- **Diagnostics:**
+  - *Frame build* shows the average time to compose one frame;
+  - every engine decision and failure is written to `settings/atelierclock/fluid.log` (at most 64 KiB).
+- **Tests:** 2 new tests check that no KOReader refresh happens while a worker exists (apply, text entry, tab changes), and that an error stops the worker and closes the studio. 171 tests.
 
 ---
 
