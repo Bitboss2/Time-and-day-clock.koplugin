@@ -107,7 +107,7 @@ def main():
         drag(cx-260,cy,320,0,8,1/60);run(.8)
         recording=false
     ''')
-    save_gif('carrousel.gif',frames(lua))
+    save_gif('carousel.gif',frames(lua))
     # Catalogue.
     lua.execute("tap(find('segment',2));run(.8)")
     shots['atelier-catalogue.png']=lua.eval('snapshot()').img.copy()
@@ -121,7 +121,7 @@ def main():
         tap(find('tab','Galerie'));run(.7)
         recording=false
     ''')
-    save_gif('onglets.gif',frames(lua))
+    save_gif('tabs.gif',frames(lua))
     # Modules: slot → sheet → choice → ghost flight → pulse.
     lua.execute("tap(find('tab','Composer'));run(.7)")
     shots['atelier-composer.png']=lua.eval('snapshot()').img.copy()
@@ -150,7 +150,7 @@ def main():
         drag(v.w/2,v.y+v.h*.3,0,500,6,1/60);run(1.2)
         recording=false
     ''')
-    save_gif('reglages.gif',frames(lua))
+    save_gif('settings.gif',frames(lua))
     lua.execute("st:cancelDraft();run(3);st.scroll:scrollTo(0,false);st:refresh();run(3)")
     shots['atelier-veille.png']=lua.eval('snapshot()').img.copy()
     lua.execute("tap(find('tab','Diagnostic'));run(1.5)")
@@ -167,11 +167,11 @@ def main():
         tap(play);run(1)
         recording=false;app.launch=launch
     ''')
-    save_gif('afficher.gif',frames(lua))
+    save_gif('show-clock.gif',frames(lua))
     for name,im in shots.items():
         im.save(SHOTS/name);print(name)
     # Hero: three screens on hand-drawn readers, plus a Bayer panel view.
-    trio=[device(shots['atelier-galerie.png'],'Cadrans'),device(shots['atelier-modules.png'],'Modules'),device(shots['atelier-veille.png'],'Veille')]
+    trio=[device(shots['atelier-galerie.png'],'Faces'),device(shots['atelier-modules.png'],'Modules'),device(shots['atelier-veille.png'],'Sleep screen')]
     tw=sum(t.width for t in trio)+80*4;th=trio[0].height+160
     hero=Image.new('L',(tw,th),244);x=80
     for t in trio:hero.paste(t,(x,80));x+=t.width+80
@@ -180,9 +180,9 @@ def main():
     pair=Image.new('L',(758*2+60,1024+90),244)
     pair.paste(shots['atelier-galerie.png'],(0,0));pair.paste(dither,(758+60,0))
     d=ImageDraw.Draw(pair);f=ImageFont.truetype(FONT,26)
-    d.text((379,1060),'Image composée (8 bits)',font=f,fill=60,anchor='mm')
-    d.text((758+60+379,1060),'Tramage Bayer 8×8 simulé',font=f,fill=60,anchor='mm')
-    pair.resize((pair.width//2,pair.height//2),Image.Resampling.LANCZOS).save(MEDIA/'tramage.png');print('tramage.png')
+    d.text((379,1060),'Composed frame (8-bit)',font=f,fill=60,anchor='mm')
+    d.text((758+60+379,1060),'Simulated Bayer 8×8 dithering',font=f,fill=60,anchor='mm')
+    pair.resize((pair.width//2,pair.height//2),Image.Resampling.LANCZOS).save(MEDIA/'dithering.png');print('dithering.png')
     lua.execute('st:onCloseWidget()');r.close()
 
 if __name__=='__main__':main()

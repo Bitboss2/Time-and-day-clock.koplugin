@@ -201,7 +201,7 @@ function F:complication(id,spec,box,now)
     elseif p=="week"then local n=(t.wday+5)%7+1
         title=(self.s.locale=="en"and "WEEK "or "SEMAINE ")..os.date("%V",now);value=n.." / 7";extra=self.s.locale=="en"and "Monday — Sunday"or "Lundi — dimanche";fraction=n/7;key=os.date("%Y-%m-%d",now)
     elseif p=="world"then value,title=self.app.world:format(now,slot.zone);extra=slot.zone;key=value..title
-    elseif p=="book"then title=self.s.locale=="en"and "READING"or "LECTURE";value=self.book.percent and math.floor(self.book.percent*100).."%"or "—";extra=self.book.title or "Ouvrir un livre dans KOReader";fraction=self.book.percent;key=value..extra
+    elseif p=="book"then title=self.s.locale=="en"and "READING"or "LECTURE";value=self.book.percent and math.floor(self.book.percent*100).."%"or "—";extra=self.book.title or(self.s.locale=="en"and "Open a book in KOReader"or "Ouvrir un livre dans KOReader");fraction=self.book.percent;key=value..extra
     else title="";value="";extra="";key="empty"end
     self:tile("slot_"..id,box,key,function(bb,w,h)
         if p=="none"then return end
@@ -230,7 +230,7 @@ function F:render(now)
     local values={time=time,hour=hour,minute=minute,ampm=ampm or ""}
     for _,block in ipairs(self.layout.blocks)do self:block(block,now,values)end
     for _,slot in ipairs(self.face.slots)do self:complication(slot.id,slot,self.layout.slots[slot.id],now)end
-    local note=self.app.paused_warning or(self.s.interval==0 and "HEURE À LA MISE EN VEILLE"or self.s.interval>60 and "≈ ACTUALISATION / "..math.floor(self.s.interval/60).." MIN"or "")
+    local note=Time.note(self.app.paused_warning,self.s)
     self:tile("note",{.03,.959,.94,.034},note,function(bb,w,h)fit(bb,note,0,0,w,h,h*.65,self.ink,"cfont",false)end,"label","label")
     self.regions=Delta.plan(self.regions,4)
     self.coarse_regions=Delta.plan(self.coarse_regions,4)

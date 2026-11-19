@@ -14,10 +14,10 @@ function I:menu(items)
         for _,v in ipairs(t) do if type(v.sub_item_table)=="table" then local found=find(v.sub_item_table);if found then return found end end end
     end
     local target=find(root)
-    if not target then self.app.notice="Structure du menu de veille non reconnue.";return false end
+    if not target then self.app.notice="Sleep screen menu structure not recognised.";return false end
     for _,v in ipairs(target) do if v.atelierclock_option then return true end end
     table.insert(target,1,{
-        atelierclock_option=true,text="Horloge Atelier",radio=true,
+        atelierclock_option=true,text="Atelier clock",radio=true,
         checked_func=function() return G_reader_settings:readSetting("screensaver_type")==I.mode end,
         callback=function() self:select() end,
     })
@@ -89,16 +89,16 @@ function I:install()
             if screensaver.screensaver_lock_widget then app.ui:show(screensaver.screensaver_lock_widget) end
             local capacity=app:capacity()
             if capacity and s.low_battery>0 and capacity<=s.low_battery then
-                app.notice="Batterie basse : aucun réveil programmé."
-                app.paused_warning="BATTERIE BASSE / HEURE FIGÉE";content:update()
+                app.notice="Low battery: no wake-up scheduled."
+                app.paused_warning="battery";content:update()
             else
                 local armed,e=app.scheduler:start(s)
-                if not armed then app.notice=e;app.paused_warning="RTC INDISPONIBLE / HEURE FIGÉE";content:update()
+                if not armed then app.notice=e;app.paused_warning="rtc";content:update()
                 elseif app.kindle then app.kindle:after() end
             end
         end)
         if not ok then
-            app.notice="Échec de l'écran de veille : "..tostring(err)
+            app.notice="Sleep screen failure: "..tostring(err)
             app:stop()
             if screensaver.screensaver_widget then app.ui:close(screensaver.screensaver_widget);screensaver.screensaver_widget=nil end
             screensaver.screensaver_type="disable"

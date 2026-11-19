@@ -22,7 +22,7 @@ function P.new(env)
                 self.stats.last_error=tostring(err);self:record("render_error",tostring(err))
             else self.stats.consecutive_errors=0 end
             self.stats.cycles=self.stats.cycles+1;self.stats.last=os.time()
-            if self.stats.consecutive_errors>=3 then self:stop();self.env.failed("Rendu RTC interrompu après trois erreurs consécutives.");return end
+            if self.stats.consecutive_errors>=3 then self:stop();self.env.failed("RTC rendering stopped after three consecutive errors.");return end
             local armed,e=self:arm()
             if not armed and e then self.env.failed(e) end
             if self.active then
@@ -65,7 +65,7 @@ function P:arm()
     epoch=math.max(epoch,now+math.max(4,lead))
     if not self.env.mgr then
         self.active=false;self:record("arm_error","no WakeupMgr")
-        return nil,"RTC indisponible : écran statique."
+        return nil,"RTC unavailable: static screen."
     end
     if self.scheduled then self.env.mgr:removeTasks(nil,self.callback) end
     local ok,err=load("power/alarm").add(self.env.mgr,math.max(1,epoch-now),self.callback)
@@ -73,12 +73,12 @@ function P:arm()
     self.scheduled=ok;self.stats.next=ok and epoch or nil;self.armed_at=now
     if not ok then
         self.active=false;self.stats.last_error=tostring(err)
-        self:record("arm_error",tostring(err));return nil,"Programmation RTC : "..tostring(err)
+        self:record("arm_error",tostring(err));return nil,"RTC scheduling: "..tostring(err)
     end
     return true
 end
 function P:stop(reason)
-    if self.active then self:record("stop",reason or "arrêt de la session")end
+    if self.active then self:record("stop",reason or "session stopped")end
     self.active=false;self.generation=self.generation+1
     if self.deferred then self.env.ui:unschedule(self.deferred);self.deferred=nil end
     if self.env.mgr and self.scheduled then

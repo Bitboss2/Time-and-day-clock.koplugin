@@ -10,7 +10,7 @@ local Motion=load("ui/motion")
 local Scene=load("render/scene")
 local M={}
 local MODES={{"style","Style","style"},{"complications","Modules","layers"},{"options","Options","sliders"}}
-local STYLE_LABELS={plein="Plein",fin="Fin",contour="Contour"}
+local STYLE_LABELS={plein="Bold",fin="Thin",contour="Outline"}
 function M.install(S)
     -------------------------------------------------------------- caches
     function S:clearFaces()
@@ -120,7 +120,7 @@ function M.install(S)
             local at=self.catalog and 2 or 1
             self.cat_spring=self.cat_spring or Motion.spring(at,{omega=22,zeta=.8,eps=.004})
             self.cat_spring:set(at);if not self:animated()then self.cat_spring:jump(at)end
-            local segitems={{label="Mes cadrans",icon="gallery"},{label="Catalogue",icon="plus"}}
+            local segitems={{label="My faces",icon="gallery"},{label="Catalogue",icon="plus"}}
             local function seg(b,r)kit:segmented(b,r.x,r.y,r.w,r.h,segitems,self.cat_spring.x)end
             local box=self:region(p,seg_y,W,seg_h,nil,{paint=seg,info=true});seg(bb,box)
             self:glide(box,self.cat_spring)
@@ -134,25 +134,25 @@ function M.install(S)
             end
             if not item then
                 Icon.draw(bb,"gallery",w/2-24*k,cy+ph/2-60*k,48*k,Kit.line)
-                kit:text(bb,"Votre collection est vide",w/2,cy+ph/2,Kit.size.heading,0,"center",W,true)
-                kit:text(bb,"Ouvrez le catalogue pour choisir un cadran.",w/2,cy+ph/2+34*k,Kit.size.small,Kit.muted,"center",W)
+                kit:text(bb,"Your collection is empty",w/2,cy+ph/2,Kit.size.heading,0,"center",W,true)
+                kit:text(bb,"Open the catalogue to choose a face.",w/2,cy+ph/2+34*k,Kit.size.small,Kit.muted,"center",W)
                 return
             end
             -- Actions follow the card under the finger.
             local by=vh-62*k;local bh=50*k
             if self.catalog then
                 local bw=(W-12*k)/2
-                kit:button(bb,p,by,bw,bh,"Importer",{style="secondary",icon="import"})
+                kit:button(bb,p,by,bw,bh,"Import",{style="secondary",icon="import"})
                 self:region(p,by,bw,bh,function()self:importClock()end,{radius=bh/2,action="import"})
-                kit:button(bb,p+bw+12*k,by,bw,bh,"Ajouter",{style="primary",icon="plus"})
+                kit:button(bb,p+bw+12*k,by,bw,bh,"Add",{style="primary",icon="plus"})
                 self:region(p+bw+12*k,by,bw,bh,function()local it=self:faceList()[self.browser_index];if it then self:addFace(self.app:face(it.face))end end,{radius=bh/2,action="add"})
             else
                 local cs=bh;local gap=10*k;local bw=(W-2*cs-3*gap)/2
                 kit:iconButton(bb,p,by,cs,"more")
                 self:region(p,by,cs,cs,function()self:moreSheet()end,{radius=cs/2,action="more"})
-                kit:button(bb,p+cs+gap,by,bw,bh,"Modifier",{style="secondary",icon="edit"})
+                kit:button(bb,p+cs+gap,by,bw,bh,"Edit",{style="secondary",icon="edit"})
                 self:region(p+cs+gap,by,bw,bh,function()local it=self:faceList()[self.browser_index];if it then self:selectItem(it);self:switchTab("Composer")end end,{radius=bh/2,action="edit"})
-                kit:button(bb,p+cs+2*gap+bw,by,bw,bh,"Utiliser",{style="primary",icon="check"})
+                kit:button(bb,p+cs+2*gap+bw,by,bw,bh,"Use",{style="primary",icon="check"})
                 self:region(p+cs+2*gap+bw,by,bw,bh,function()local it=self:faceList()[self.browser_index];if it then self:selectItem(it);self:apply()end end,{radius=bh/2,action="use"})
                 kit:iconButton(bb,p+W-cs,by,cs,"play",{filled=true})
                 self:region(p+W-cs,by,cs,cs,function()
@@ -200,7 +200,7 @@ function M.install(S)
                 local it=list[idx];local ok,face=pcall(self.app.face,self.app,it.face)
                 local tl=self.newBB(W,62*k)
                 kit:text(tl,it.title or(ok and face.name)or "",W/2,4*k,Kit.size.heading,0,"center",W,true)
-                local sub=ok and(self.catalog and(face.category or face.subtitle or "")or(face.name..(it.uid and(" · "..(STYLE_LABELS[it.style]or "Plein"))or "")))or ""
+                local sub=ok and(self.catalog and(face.category or face.subtitle or "")or(face.name..(it.uid and(" · "..(STYLE_LABELS[it.style]or "Bold"))or "")))or ""
                 if not self.catalog and self.draft.active_id==it.uid then sub="Active · "..sub end
                 kit:text(tl,sub,W/2,34*k,Kit.size.small,Kit.muted,"center",W)
                 self.title_layer=tl;self.title_index=idx;self.title_catalog=self.catalog
@@ -213,19 +213,19 @@ function M.install(S)
         local list=self:faceList();local item=list[self.browser_index];if not item then return end
         local f=self.app:face(item.face);local k,kit=self.k,self.kit
         local actions={
-            {"copy","Dupliquer",function()
-                local v,e=C.add(self.draft,f,item);self.status=e or "Variante ajoutée"
+            {"copy","Duplicate",function()
+                local v,e=C.add(self.draft,f,item);self.status=e or "Variant added"
                 if v then self.browser_index=#self.draft.collection;self:markDirty();self:syncCarousel(true)end;self:refresh()
             end},
-            {"rename","Renommer",function()
-                self:input("Nom de cette variante",item.title,function(value)
-                    if #value>0 and #value<=80 then item.title=value;self:markDirty()else self.status="Nom de 1 à 80 octets"end;self:clearFaces();self:refresh()
+            {"rename","Rename",function()
+                self:input("Name of this variant",item.title,function(value)
+                    if #value>0 and #value<=80 then item.title=value;self:markDirty()else self.status="Name: 1 to 80 bytes"end;self:clearFaces();self:refresh()
                 end)
             end},
-            {"play","Afficher en plein écran",function()self:selectItem(item);self:launchClock(self.card_box)end},
-            {"trash","Retirer de mes cadrans",function()
-                if #self.draft.collection<=1 then self.status="Conserver au moins un cadran";self:refresh();return end
-                self:confirmSheet("Retirer « "..(item.title or f.name).." » ?","Le modèle reste disponible dans le catalogue.","Retirer",function()
+            {"play","Show full screen",function()self:selectItem(item);self:launchClock(self.card_box)end},
+            {"trash","Remove from my faces",function()
+                if #self.draft.collection<=1 then self.status="Keep at least one face";self:refresh();return end
+                self:confirmSheet("Remove “"..(item.title or f.name).."”?","The model stays available in the catalogue.","Remove",function()
                     table.remove(self.draft.collection,self.browser_index)
                     if self.draft.active_id==item.uid then C.select(self.draft,self.draft.collection[1])end
                     self.browser_index=U.clamp(self.browser_index,1,#self.draft.collection)
@@ -246,7 +246,7 @@ function M.install(S)
         end}
     end
     function S:addFace(face)
-        local item,e=C.add(self.draft,face);self.status=e or "Cadran ajouté — touchez un module"
+        local item,e=C.add(self.draft,face);self.status=e or "Face added — tap a module"
         if item then
             self:markDirty();self.catalog=false;self.browser_index=#self.draft.collection;self.edit_mode="complications"
             if self.carousel then self.carousel:scrollTo((self.browser_index-1)*(self.spacing or 0),false)end
@@ -255,8 +255,8 @@ function M.install(S)
         self:refresh()
     end
     function S:importClock()
-        self:input("Fichier .clock — chemin complet","/mnt/onboard/",function(path)
-            local f,e=self.app:import(path);self.status=f and "Importé dans le catalogue"or tostring(e)
+        self:input(".clock file — full path","/mnt/onboard/",function(path)
+            local f,e=self.app:import(path);self.status=f and "Imported into the catalogue"or tostring(e)
             if f then self.catalog=true;self.browser_index=#self.app.faces;self:syncCarousel(false)end;self:refresh()
         end)
     end
@@ -314,24 +314,24 @@ function M.install(S)
         local y0=seg_y+seg_h+18*k
         if mode=="options"then
             local rows={
-                {"rename","Nom de la variante","action",icon="rename",value=item.title,callback=function()
-                    self:input("Nom de cette variante",item.title,function(value)if #value>0 and #value<=80 then item.title=value;self:markDirty()else self.status="Nom de 1 à 80 octets"end;self:refresh()end)
+                {"rename","Variant name","action",icon="rename",value=item.title,callback=function()
+                    self:input("Name of this variant",item.title,function(value)if #value>0 and #value<=80 then item.title=value;self:markDirty()else self.status="Name: 1 to 80 bytes"end;self:refresh()end)
                 end},
-                {"export","Exporter en .clock","action",icon="export",callback=function()
+                {"export","Export as .clock","action",icon="export",callback=function()
                     U.mkdir(self.app.data_dir.."/exports")
-                    self:input("Exporter ce cadran .clock",self.app.data_dir.."/exports/"..item.face.."-"..item.uid..".clock",function(path)
-                        local file,e=load("packages/export").write(self.app,self.draft,path);self.status=file and "Cadran exporté"or tostring(e);self:refresh()
+                    self:input("Export this face as .clock",self.app.data_dir.."/exports/"..item.face.."-"..item.uid..".clock",function(path)
+                        local file,e=load("packages/export").write(self.app,self.draft,path);self.status=file and "Face exported"or tostring(e);self:refresh()
                     end)
                 end},
             }
-            local fmt={{"rotation","Orientation","choice"},{"format","Format de l’heure","choice"},{"locale","Langue","choice"},{"date_format","Date","choice"}}
-            local ui={{"ui_scale","Taille de l’interface",85,140,5,"%"}}
+            local fmt={{"rotation","Orientation","choice"},{"format","Time format","choice"},{"locale","Clock language","choice"},{"date_format","Date","choice"}}
+            local ui={{"ui_scale","Interface size",85,140,5,"%"}}
             local function h(list)local s=24*k;for _,r in ipairs(list)do s=s+self:rowHeight(r)end;return s+22*k end
             return {height=y0+h(rows)+h(fmt)+h(ui)+90*k,draw=function(bb)
                 segment(bb);local y=y0
-                y=y+self:group(bb,"Variante",rows,p,y,W)+22*k
-                y=y+self:group(bb,"Heure et date",fmt,p,y,W)+22*k
-                self:group(bb,"Lisibilité",ui,p,y,W)
+                y=y+self:group(bb,"Variant",rows,p,y,W)+22*k
+                y=y+self:group(bb,"Time and date",fmt,p,y,W)+22*k
+                self:group(bb,"Legibility",ui,p,y,W)
             end}
         end
         local view={height=vh}
@@ -340,7 +340,7 @@ function M.install(S)
             if mode=="complications"then
                 local ph=vh-y0-56*k
                 self:facePreview(bb,p,y0,W,ph,true)
-                kit:text(bb,"Touchez un module + pour changer son contenu",w/2,y0+ph+16*k,Kit.size.small,Kit.muted,"center",W)
+                kit:text(bb,"Tap a + module to change its content",w/2,y0+ph+16*k,Kit.size.small,Kit.muted,"center",W)
             else
                 local ph=vh-y0-150*k
                 self:facePreview(bb,p,y0,W,ph,false)
@@ -355,7 +355,7 @@ function M.install(S)
                     self:region(x,by,cw,54*k,function()item.style=style;self:markDirty();self:clearFaces();self:refresh()end,{style_id=style,radius=16*k})
                 end
                 local ay=by+68*k
-                local looks={{"paper","Papier","sun"},{"ink","Encre","drop"},{"follow","Auto","auto"}}
+                local looks={{"paper","Paper","sun"},{"ink","Ink","drop"},{"follow","Auto","auto"}}
                 local at2=1;for i,v in ipairs(looks)do if item.appearance==v[1]then at2=i end end
                 local items={};for i,v in ipairs(looks)do items[i]={label=v[2],icon=v[3]}end
                 kit:segmented(bb,p,ay,W,46*k,items,at2)
@@ -393,7 +393,7 @@ function M.install(S)
         local cols=2;local rows=math.ceil(#spec.allowed/cols)
         local ch=math.floor(math.min(150*k,(self.h*.62-80*k)/math.max(1,rows)));local extra=config.provider=="world"and 66*k or 30*k
         local slot_id=spec.id
-        self:openSheet{kind="picker",title=spec.label,subtitle="Données locales · aucun accès réseau",
+        self:openSheet{kind="picker",title=spec.label,subtitle="Local data · no network access",
             content_h=rows*(ch+gap)+extra,draw=function(bb,w)
             local p=self.pad;local cw=(w-2*p-gap)/cols
             for i,provider in ipairs(spec.allowed)do
@@ -419,7 +419,7 @@ function M.install(S)
             end
             if config.provider=="world"then
                 local y=rows*(ch+gap)+4*k;local zone=config.zone
-                kit:button(bb,p,y,w-2*p,50*k,"Fuseau : "..zone,{style="soft",icon="globe"})
+                kit:button(bb,p,y,w-2*p,50*k,"Time zone: "..zone,{style="soft",icon="globe"})
                 self:region(p,y,w-2*p,50*k,function()
                     for i,z in ipairs(C.zones)do if z==zone then zone=C.zones[i%#C.zones+1];break end end
                     item.slots[slot_id]={provider="world",zone=zone};self:markDirty();self:buildSheet();self.preview=nil;self:refresh()

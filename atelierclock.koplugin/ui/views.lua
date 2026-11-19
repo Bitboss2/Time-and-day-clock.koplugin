@@ -11,15 +11,15 @@ local Controls=load("ui/controls")
 local Settings=load("core/settings")
 local Scene=load("render/scene")
 local M={}
-local names={time="Heure",date="Date",battery="Batterie",wifi="Wi-Fi",memory="Mémoire",world="Monde"}
+local names={time="Time",date="Date",battery="Battery",wifi="Wi-Fi",memory="Memory",world="World"}
 local element_icons={time="clock",date="info",battery="battery",wifi="wave",memory="layers",world="globe"}
 local sections={"Disposition","Typographie","Habillage","Informations","Images","Lisibilité"}
 local symbols={Disposition="move",Typographie="text",Habillage="style",Informations="info",Images="image",Lisibilité="sliders"}
-local labels={auto="Automatique",fluid="Fluide",classic="Classique",full="Complètes",reduced="Réduites"}
-local intervals={{60,"1 min","Heure précise"},{300,"5 min","Heure approchée"},{900,"15 min","Heure approchée"},{0,"Statique","Figée à l’endormissement"}}
+local labels={auto="Automatic",fluid="Fluid",classic="Classic",full="Full",reduced="Reduced"}
+local intervals={{60,"1 min","Precise time"},{300,"5 min","Approximate time"},{600,"10 min","Approximate time"},{900,"15 min","Approximate time"},{0,"Static","Frozen when the reader sleeps"}}
 M.labels=labels
 local function choiceLabel(key,value)
-    if key=="interval"then for _,v in ipairs(intervals)do if v[1]==value then return v[1]==0 and "Statique"or "Toutes les "..v[2]end end end
+    if key=="interval"then for _,v in ipairs(intervals)do if v[1]==value then return v[1]==0 and "Static"or "Every "..v[2]end end end
     if key=="display_fps"then return tostring(value).." Hz"end
     return labels[value]or Controls.labels[value]or tostring(value)
 end
@@ -67,7 +67,7 @@ function M.install(S)
             Icon.draw(bb,row.chevron or "right",x+w-p-16*k,y+h/2-8*k,16*k,Kit.muted)
         else
             local value=U.get(self.draft,key)
-            local desc=kind=="text"and(value~=""and tostring(value)or "Non défini")or choiceLabel(key,value)
+            local desc=kind=="text"and(value~=""and tostring(value)or "Not set")or choiceLabel(key,value)
             kit:text(bb,label,x+p,y+h/2-12*k,Kit.size.body,0,"left",(w-2*p)*.55,false)
             kit:text(bb,desc,x+w-p-24*k,y+h/2-11*k,Kit.size.small,Kit.muted,"right",(w-2*p)*.42)
             Icon.draw(bb,kind=="text"and "rename"or "right",x+w-p-16*k,y+h/2-8*k,16*k,Kit.muted)
@@ -98,7 +98,7 @@ function M.install(S)
             local r;r=self:region(x,y,w,h,function()
                 local value=not U.get(self.draft,key)
                 if row.onchange then return row.onchange(value)end
-                if key=="fast_rtc"and value and not self.app.kobo.supported then self.status="Réservé aux Kobo Aura 2";self:refresh();return end
+                if key=="fast_rtc"and value and not self.app.kobo.supported then self.status="Kobo Aura 2 only";self:refresh();return end
                 U.set(self.draft,key,value);self:markDirty()
                 self:animateKnob(key,value,r)
             end,{paint=paint,key=key,clear=clear})
@@ -156,12 +156,12 @@ function M.install(S)
         local caps=load("power/capabilities").detect(self.app.device)
         local adv={}
         for _,r in ipairs(Controls.sections().Veille)do if r[1]~="interval"and r[1]~="fast_rtc"then adv[#adv+1]=r end end
-        local wake={{"rtc","Réveil programmé","info",caps.label.." · "..caps.model}}
-        wake[#wake+1]={"fast_rtc","Réveil prioritaire Aura 2","bool"}
-        wake[#wake+1]={"optimize","Optimiser pour Aura 2","action",callback=function()
-            if not self.app.kobo.supported then self.status="Réservé aux Kobo Aura 2";self:refresh();return end
+        local wake={{"rtc","Scheduled wake-up","info",caps.label.." · "..caps.model}}
+        wake[#wake+1]={"fast_rtc","Aura 2 priority wake-up","bool"}
+        wake[#wake+1]={"optimize","Optimise for Aura 2","action",callback=function()
+            if not self.app.kobo.supported then self.status="Kobo Aura 2 only";self:refresh();return end
             self.draft.fast_rtc=true;self.draft.reuse_suspend=true;self.draft.wake_margin=.1;self:markDirty()
-            self.status="Profil Aura 2 prêt — Appliquer";self:refresh()
+            self.status="Aura 2 profile ready — Apply";self:refresh()
         end,icon="spark",bold=true}
         local function height(rows)local h=24*k;for _,r in ipairs(rows)do h=h+self:rowHeight(r)end;return h end
         local hero=124*k;local freq=24*k+52*k+34*k
@@ -175,8 +175,8 @@ function M.install(S)
             local ink=on and 255 or 0
             D.circle(bb,p+44*k,y+hero/2,26*k,on and 255 or Kit.wash)
             Icon.draw(bb,"moon",p+31*k,y+hero/2-13*k,26*k,0)
-            kit:text(bb,"Horloge en veille",p+86*k,y+30*k,Kit.size.heading,ink,"left",W-190*k,true)
-            local sub=on and(self.draft.interval==0 and "Active · image fixe"or "Active · "..choiceLabel("interval",self.draft.interval):lower())or "Écran de veille KOReader"
+            kit:text(bb,"Clock on the sleep screen",p+86*k,y+30*k,Kit.size.heading,ink,"left",W-190*k,true)
+            local sub=on and(self.draft.interval==0 and "On · static image"or "On · "..choiceLabel("interval",self.draft.interval):lower())or "KOReader sleep screen"
             kit:text(bb,sub,p+86*k,y+62*k,Kit.size.small,on and 220 or Kit.muted,"left",W-190*k)
             local sx=p+W-80*k
             D.round(bb,sx,y+hero/2-17*k,60*k,34*k,17*k,on and 255 or 255)
@@ -184,10 +184,10 @@ function M.install(S)
             D.circle(bb,sx+(on and 43 or 17)*k,y+hero/2,12*k,0)
             self:region(p,y,W,hero,function()
                 if on then self.app.integration:disable()else self.app.integration:select()end
-                self.status=on and "Écran de veille précédent rétabli"or "Horloge activée pour la veille";self:refresh()
+                self.status=on and "Previous sleep screen restored"or "Clock enabled for the sleep screen";self:refresh()
             end,{role="screensaver"})
             y=y+hero+22*k
-            kit:section(bb,"Fréquence",p,y,W);y=y+24*k
+            kit:section(bb,"Refresh",p,y,W);y=y+24*k
             local items={};local active=1
             for i,v in ipairs(intervals)do items[i]=v[2];if self.draft.interval==v[1]then active=i end end
             self.interval_spring=self.interval_spring or Motion.spring(active,{omega=22,zeta=.78,eps=.004})
@@ -205,13 +205,13 @@ function M.install(S)
             end
             y=y+52*k+8*k
             local hint=intervals[active][3]
-            if caps.kind=="kindle"and self.draft.interval==60 then hint="Kindle : ±15 s · 5 min conseillées"end
+            if caps.kind=="kindle"and self.draft.interval==60 then hint="Kindle: ±15 s · 5 min recommended"end
             if not caps.available then hint=caps.detail end
             kit:text(bb,hint,p+6*k,y,Kit.size.small,Kit.muted,"left",W);y=y+26*k+22*k
-            y=y+self:group(bb,"Réveil",wake,p,y,W)+22*k
+            y=y+self:group(bb,"Wake-up",wake,p,y,W)+22*k
             adv_y=y
-            y=y+self:group(bb,"Réglages avancés",adv,p,y,W)+14*k
-            self:paragraph(bb,caps.detail.." Autonomie à mesurer sur la liseuse.",p+6*k,y,W-12*k,Kit.size.small,3,Kit.muted)
+            y=y+self:group(bb,"Advanced settings",adv,p,y,W)+14*k
+            self:paragraph(bb,caps.detail.." Battery life must be measured on the reader.",p+6*k,y,W-12*k,Kit.size.small,3,Kit.muted)
             if self.power_detail then view.scroll_to=adv_y end
         end
         return view
@@ -221,25 +221,25 @@ function M.install(S)
     function S:displayRows()
         local info=self.display:info()
         local rows={
-            {"engine_now","Moteur actif","info",function()
+            {"engine_now","Active engine","info",function()
                 local i=self.display:info();local r=i.rates or {}
-                local live=self.display:isFluid()and r.publish and string.format(" · %.0f cibles/s · %.0f scans/s",r.publish,r.scans or 0)or ""
+                local live=self.display:isFluid()and r.publish and string.format(" · %.0f targets/s · %.0f scans/s",r.publish,r.scans or 0)or ""
                 return i.label..live
             end},
-            {"engine_detail","Profil","info",info.detail or "—"},
-            {"display_engine","Moteur d’affichage","choice"},
-            {"display_fps","Cadence cible","choice"},
-            {"display_rest","Nettoyage au repos","bool"},
+            {"engine_detail","Profile","info",info.detail or "—"},
+            {"display_engine","Display engine","choice"},
+            {"display_fps","Target frame rate","choice"},
+            {"display_rest","Clean at rest","bool"},
             {"motion","Animations","choice"},
-            {"clean","Nettoyer l’écran","action",icon="wave",callback=function()
+            {"clean","Clean the screen","action",icon="wave",callback=function()
                 if not self.display:clean()then self.app.ui:setDirty(self,"full")end
-                self.status="Écran nettoyé";self:refresh()
+                self.status="Screen cleaned";self:refresh()
             end},
         }
         if self.display.state=="classic"and self.draft.display_engine~="classic"then
-            rows[#rows+1]={"retry","Réessayer le moteur fluide","action",icon="spark",callback=function()
+            rows[#rows+1]={"retry","Retry the fluid engine","action",icon="spark",callback=function()
                 load("engine/display").resetCache();self.display.notice=nil;self.display:select()
-                if self.display:wanted()then self.display:start();self.status="Vérification du moteur…"
+                if self.display:wanted()then self.display:start();self.status="Checking the engine…"
                 else self.status=self.display.profile.detail end
                 self:refresh()
             end}
@@ -249,34 +249,34 @@ function M.install(S)
     function S:detailRows()
         local a,p=self.app,self.app.scheduler
         local measure=a.kobo.measure:update()
-        local function seconds(n)return n and string.format("%.3f s",n)or "Inconnue"end
+        local function seconds(n)return n and string.format("%.3f s",n)or "Unknown"end
         local info=self.display:info();local r=info.rates or {}
-        local d={{"Version",load("core/version")},{"Modèle",a.device.model or "Inconnu"},{"DPI détecté",tostring(self.dpi)},
-            {"Résolution",self.w.." × "..self.h},
-            {"Affichage",info.label},{"Profil moteur",info.detail or "—"},
-            {"Cibles / scans par seconde",r.publish and string.format("%.1f / %.1f",r.publish,r.scans or 0)or "Moteur au repos"},
-            {"CPU du moteur",r.cpu and string.format("%.0f %%",r.cpu)or "—"},
-            {"Réveil programmé",load("power/capabilities").detect(a.device).label},
-            {"Dernier rendu",a.metrics.last and os.date("%H:%M:%S",a.metrics.last)or "Aucun"},
-            {"Surface demandée",(a.metrics.refresh_percent or 0).." % de l’écran"},
-            {"Réduction des zones (pas énergie)",a.metrics.requested_area_factor and string.format("× %.2f",a.metrics.requested_area_factor)or "Aucune comparaison"},
-            {"Temps CPU du rendu",(a.metrics.render_ms or 0).." ms"},
-            {"Batterie de la session",a.metrics.battery_drop_points and a.metrics.battery_drop_points.." points / "..math.floor((a.metrics.session_seconds or 0)/60).." min"or "Mesure en cours"},
-            {"Retard du callback",p.stats.alarm_lag_s and p.stats.alarm_lag_s.." s"or "Inconnu"},
-            {"Rattrapages",tostring(p.stats.recoveries or 0)},{"Erreurs de rendu consécutives",tostring(p.stats.consecutive_errors or 0)},
-            {"Budget réveils KOReader",tostring(a.device.unexpected_wakeup_count or 0)},
-            {"Durée du dernier appel mem",seconds(measure.native_last_sleep_s)},
-            {"Temps cumulé dans mem",seconds(measure.sleep_s)},
-            {"Sommeil (horloges noyau)",measure.verified_sleep_percent and string.format("%.1f %%",measure.verified_sleep_percent)or "Indisponible"},
-            {"Éveil → demande de sommeil",seconds(measure.wake_to_suspend_s)},
-            {"Retours mem courts/refusés",tostring(a.kobo.short_returns or 0)},
-            {"Relances natives rapprochées",tostring(a.kobo.retry_count or 0)},
-            {"Cycles en veille RTC",tostring(a.kobo.settle.data.cycles or 0)},
-            {"Sommeil en veille RTC",seconds(measure.standby_verified_sleep_s)},
-            {"État veille RTC",a.kobo.settle.data.reason or(a.kobo.settle.confirmed and "Pilote FP9928 confirmé"or "Pas de refus FP9928 confirmé")},
-            {"Préparations réutilisées",tostring(a.kobo.direct_used or 0)},
-            {"Repli après sommeil trop court",tostring(a.kobo.direct_fallbacks or 0)},
-            {"Retour en veille",a.kobo.direct_reason or "Aucun cycle mesuré"}}
+        local d={{"Version",load("core/version")},{"Model",a.device.model or "Unknown"},{"Detected DPI",tostring(self.dpi)},
+            {"Resolution",self.w.." × "..self.h},
+            {"Display",info.label},{"Engine profile",info.detail or "—"},
+            {"Targets / scans per second",r.publish and string.format("%.1f / %.1f",r.publish,r.scans or 0)or "Engine idle"},
+            {"Engine CPU",r.cpu and string.format("%.0f %%",r.cpu)or "—"},
+            {"Scheduled wake-up",load("power/capabilities").detect(a.device).label},
+            {"Last render",a.metrics.last and os.date("%H:%M:%S",a.metrics.last)or "None"},
+            {"Requested area",(a.metrics.refresh_percent or 0).." % of the screen"},
+            {"Area reduction (not energy)",a.metrics.requested_area_factor and string.format("× %.2f",a.metrics.requested_area_factor)or "No comparison"},
+            {"Render CPU time",(a.metrics.render_ms or 0).." ms"},
+            {"Session battery",a.metrics.battery_drop_points and a.metrics.battery_drop_points.." points / "..math.floor((a.metrics.session_seconds or 0)/60).." min"or "Measuring"},
+            {"Callback delay",p.stats.alarm_lag_s and p.stats.alarm_lag_s.." s"or "Unknown"},
+            {"Recoveries",tostring(p.stats.recoveries or 0)},{"Consecutive render errors",tostring(p.stats.consecutive_errors or 0)},
+            {"KOReader wake-up budget",tostring(a.device.unexpected_wakeup_count or 0)},
+            {"Last mem call duration",seconds(measure.native_last_sleep_s)},
+            {"Total time in mem",seconds(measure.sleep_s)},
+            {"Sleep (kernel clocks)",measure.verified_sleep_percent and string.format("%.1f %%",measure.verified_sleep_percent)or "Unavailable"},
+            {"Wake → sleep request",seconds(measure.wake_to_suspend_s)},
+            {"Short/refused mem returns",tostring(a.kobo.short_returns or 0)},
+            {"Close native retries",tostring(a.kobo.retry_count or 0)},
+            {"RTC standby cycles",tostring(a.kobo.settle.data.cycles or 0)},
+            {"RTC standby sleep",seconds(measure.standby_verified_sleep_s)},
+            {"RTC standby state",a.kobo.settle.data.reason or(a.kobo.settle.confirmed and "FP9928 driver confirmed"or "No confirmed FP9928 refusal")},
+            {"Reused preparations",tostring(a.kobo.direct_used or 0)},
+            {"Fallbacks after too short sleep",tostring(a.kobo.direct_fallbacks or 0)},
+            {"Return to sleep",a.kobo.direct_reason or "No cycle measured"}}
         local rows={};for i,v in ipairs(d)do rows[i]={"detail"..i,v[1],"info",v[2]}end
         return rows
     end
@@ -285,11 +285,11 @@ function M.install(S)
         local a,sch=self.app,self.app.scheduler
         local disp=self:displayRows()
         local tools={
-            {"details",self.diagnostic_detail and "Masquer les détails"or "Détails techniques","action",icon="pulse",chevron=self.diagnostic_detail and "up"or "down",callback=function()
+            {"details",self.diagnostic_detail and "Hide details"or "Technical details","action",icon="pulse",chevron=self.diagnostic_detail and "up"or "down",callback=function()
                 self.diagnostic_detail=not self.diagnostic_detail;self:refresh()
             end},
-            {"export","Exporter le diagnostic","action",icon="export",callback=function()self:exportDiagnostic()end},
-            {"profile","Profil — importer / exporter","action",icon="file",callback=function()self:profile()end},
+            {"export","Export diagnostics","action",icon="export",callback=function()self:exportDiagnostic()end},
+            {"profile","Profile — import / export","action",icon="file",callback=function()self:profile()end},
         }
         local details=self.diagnostic_detail and self:detailRows()or {}
         local function height(rows)if #rows==0 then return 0 end;local h=24*k;for _,r in ipairs(rows)do h=h+self:rowHeight(r)end;return h+22*k end
@@ -300,13 +300,13 @@ function M.install(S)
             local y=12*k
             kit:card(bb,p,y,W,hero,{radius=24*k})
             local capacity=a:capacity()
-            kit:gauge(bb,p+70*k,y+hero/2,46*k,capacity and capacity/100,capacity and capacity.."%"or "—","batterie")
-            kit:text(bb,sch.active and "Horloge active"or "Horloge au repos",p+136*k,y+26*k,Kit.size.heading,0,"left",W-150*k,true)
-            self:paragraph(bb,a.notice or self.display.notice or "Mesures de la session en cours.",p+136*k,y+60*k,W-150*k,Kit.size.small,3,Kit.muted)
+            kit:gauge(bb,p+70*k,y+hero/2,46*k,capacity and capacity/100,capacity and capacity.."%"or "—","battery")
+            kit:text(bb,sch.active and "Clock active"or "Clock idle",p+136*k,y+26*k,Kit.size.heading,0,"left",W-150*k,true)
+            self:paragraph(bb,a.notice or self.display.notice or "Measurements of the current session.",p+136*k,y+60*k,W-150*k,Kit.size.small,3,Kit.muted)
             y=y+hero+18*k
             -- Counters glide up to their value when the tab opens.
             local gap=12*k;local cw=(W-gap)/2
-            local stats={{sch.stats.cycles or 0,"mises à jour"},{sch.stats.recoveries or 0,"rattrapages"}}
+            local stats={{sch.stats.cycles or 0,"updates"},{sch.stats.recoveries or 0,"recoveries"}}
             self.count=self.count or {t=1}
             for i,st in ipairs(stats)do
                 local x=p+(i-1)*(cw+gap)
@@ -322,15 +322,15 @@ function M.install(S)
             y=y+tiles+18*k
             kit:card(bb,p,y,W,next_h,{radius=20*k,shadow=false,stroke_color=Kit.line})
             Icon.draw(bb,"clock",p+18*k,y+next_h/2-13*k,26*k,0)
-            kit:text(bb,"Prochaine actualisation",p+60*k,y+14*k,Kit.size.small,Kit.muted,"left",W-80*k)
-            kit:text(bb,sch.stats.next and os.date("%H:%M:%S",sch.stats.next)or "Aucune alarme programmée",p+60*k,y+38*k,Kit.size.heading,0,"left",W-80*k,true)
+            kit:text(bb,"Next update",p+60*k,y+14*k,Kit.size.small,Kit.muted,"left",W-80*k)
+            kit:text(bb,sch.stats.next and os.date("%H:%M:%S",sch.stats.next)or "No alarm scheduled",p+60*k,y+38*k,Kit.size.heading,0,"left",W-80*k,true)
             y=y+next_h+22*k
             local live_y=y+24*k
-            y=y+self:group(bb,"Affichage",disp,p,y,W)+22*k
+            y=y+self:group(bb,"Display",disp,p,y,W)+22*k
             for _,r in ipairs(self.cregions)do if r.key=="engine_now"then self.live_region=r end end
-            y=y+self:group(bb,"Outils",tools,p,y,W)+22*k
+            y=y+self:group(bb,"Tools",tools,p,y,W)+22*k
             if #details>0 then
-                local dy=y;y=y+self:group(bb,"Détails techniques",details,p,y,W)+22*k
+                local dy=y;y=y+self:group(bb,"Technical details",details,p,y,W)+22*k
                 if self.diagnostic_detail and self.scroll_details then view.scroll_to=dy;self.scroll_details=nil end
             end
             local _=live_y
@@ -351,17 +351,17 @@ function M.install(S)
     end
     function S:exportDiagnostic()
         local ok,e=load("power/report").write(self.app,"diagnostic.json",true)
-        self.status=ok and "Diagnostic enregistré"or tostring(e);self:refresh()
+        self.status=ok and "Diagnostics saved"or tostring(e);self:refresh()
     end
     function S:profile()
-        self:input("Chemin du profil JSON ou de l'ancien fichier Lua",self.app.data_dir.."/profil.json",function(path)
+        self:input("Path of the JSON profile or old Lua file",self.app.data_dir.."/profile.json",function(path)
             local b=U.read(path,131072)
             if b then local ok,r,message=pcall(function()
                 if path:match("%.lua$")then local L=load("core/legacy");return L.convert(L.parse(b),self.draft)end
                 return Settings.validate(require("json").decode(b))
             end)
-                if ok then self.draft=r;self:markDirty();self.status=message or "Profil importé"else self.status=tostring(r)end
-            else local ok,e=U.write(path,require("json").encode(self.draft));self.status=ok and "Profil exporté"or tostring(e)end
+                if ok then self.draft=r;self:markDirty();self.status=message or "Profile imported"else self.status=tostring(r)end
+            else local ok,e=U.write(path,require("json").encode(self.draft));self.status=ok and "Profile exported"or tostring(e)end
             self:refresh()
         end)
     end
@@ -393,7 +393,7 @@ function M.install(S)
     end
     function S:elementSheet()
         local opts={};for _,source in ipairs({"time","date","battery","wifi","memory","world"})do opts[#opts+1]={value=source,label=names[source],icon=element_icons[source]}end
-        self:choiceSheet("Élément à modifier",opts,self.element,function(v)self.element=v;self:refresh()end)
+        self:choiceSheet("Element to edit",opts,self.element,function(v)self.element=v;self:refresh()end)
         self.sheet.on_close=function()self.element_selector=false end
     end
     function S:legacyComposer()
@@ -401,13 +401,13 @@ function M.install(S)
         if self.element_selector and not self.sheet then self:elementSheet()end
         if self.section~="Aperçu"then
             local rows=Controls.sections(self.element,self.draft.units)[self.section]
-            if self.section=="Lisibilité"then rows={{"ui_scale","Taille de l'interface",85,140,5,"%"},{"scale","Échelle du cadran",40,150,5,"%"}}end
-            local head={{"element","Élément : "..names[self.element],"action",icon=element_icons[self.element],callback=function()self.element_selector=true;self:refresh()end,bold=true}}
+            if self.section=="Lisibilité"then rows={{"ui_scale","Interface size",85,140,5,"%"},{"scale","Face scale",40,150,5,"%"}}end
+            local head={{"element","Element: "..names[self.element],"action",icon=element_icons[self.element],callback=function()self.element_selector=true;self:refresh()end,bold=true}}
             local h=12*k;for _,r in ipairs(rows)do h=h+self:rowHeight(r)end
             return {height=12*k+64*k+22*k+24*k+h+120*k,draw=function(bb)
                 local y=12*k
                 y=y+self:group(bb,nil,head,p,y,W)+22*k
-                self:group(bb,self.section,rows,p,y,W)
+                self:group(bb,Controls.section_names[self.section]or self.section,rows,p,y,W)
             end}
         end
         return {height=vh,draw=function(bb)
@@ -416,21 +416,21 @@ function M.install(S)
             self:previewAt(bb,p,y,pw,ph,true)
             local right=p+pw+16*k;local rw=w-right-p
             kit:text(bb,self.app:face(self.draft.face).name,right,y+6*k,Kit.size.heading,0,"left",rw,true)
-            self:paragraph(bb,"Toucher un élément, puis le faire glisser sur l’aperçu.",right,y+40*k,rw,Kit.size.small,4,Kit.muted)
+            self:paragraph(bb,"Tap an element, then drag it on the preview.",right,y+40*k,rw,Kit.size.small,4,Kit.muted)
             local by=y+ph-108*k
             kit:button(bb,right,by,rw,46*k,names[self.element],{style="secondary",icon=element_icons[self.element],size=Kit.size.small})
             self:region(right,by,rw,46*k,function()self.element_selector=true;self:refresh()end,{radius=23*k})
-            kit:button(bb,right,by+56*k,rw,46*k,"Afficher",{style="primary",icon="play",size=Kit.size.small})
+            kit:button(bb,right,by+56*k,rw,46*k,"Show",{style="primary",icon="play",size=Kit.size.small})
             self:region(right,by+56*k,rw,46*k,function()self:launchClock(self.preview_box)end,{radius=23*k})
             y=y+ph+22*k
-            kit:section(bb,"Réglages du cadran",p,y,W);y=y+24*k
+            kit:section(bb,"Face settings",p,y,W);y=y+24*k
             local gap=12*k;local cw=(W-2*gap)/3
             local th=math.max(64*k,math.min(96*k,(vh-y-80*k-gap)/2))
             for i,name in ipairs(sections)do
                 local x=p+(i-1)%3*(cw+gap);local yy=y+math.floor((i-1)/3)*(th+gap)
                 kit:card(bb,x,yy,cw,th,{radius=18*k,shadow=false,stroke_color=Kit.line})
                 Icon.draw(bb,symbols[name],x+cw/2-13*k,yy+th/2-28*k,26*k,0)
-                kit:text(bb,name,x+cw/2,yy+th/2+8*k,Kit.size.small,0,"center",cw-10*k,true)
+                kit:text(bb,Controls.section_names[name]or name,x+cw/2,yy+th/2+8*k,Kit.size.small,0,"center",cw-10*k,true)
                 self:region(x,yy,cw,th,function()self.section=name;self.page=1;self.scroll:scrollTo(0,false);self:refresh()end,{section=name,radius=18*k})
             end
         end}

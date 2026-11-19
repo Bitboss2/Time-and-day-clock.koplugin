@@ -1,249 +1,265 @@
-# Journal des changements
+# Changelog
 
-Ce document compare **Atelier Clock 0.3.0** à la **dernière version publiée sur GitHub**, *Time & Day* (`dtdisplay`, commit `58930ab`). Les changements sont regroupés selon leur origine :
+This document compares **Atelier Clock 0.3.0** with the **latest version published on GitHub**, *Time & Day* (`dtdisplay`, commit `58930ab`). Changes are grouped by origin:
 
-- **Partie A** : le travail d'Atelier Clock jusqu'à la **0.2.5-beta.9** (l'archive fournie, qui sert de base).
-- **Partie B** : la **0.3.0**, refonte de l'interface à 30 Hz, intégration de Fluid Ink et RTC multi-liseuses.
+- **Part A**: the Atelier Clock work up to **0.2.5-beta.9**, the archive used as the base.
+- **Part B**: **0.3.0**, which rebuilds the interface for 30 Hz, integrates Fluid Ink, adds multi-reader RTC, an English interface and the 10-minute refresh.
 
-La Partie C fait correspondre les fonctions de *Time & Day* à leur équivalent actuel.
+Part C maps every *Time & Day* feature to its current equivalent.
 
 ---
 
-## Vue d'ensemble
+## Overview
 
-| | GitHub : Time & Day | 0.2.5-beta.9 | **0.3.0** |
+| | GitHub: Time & Day | 0.2.5-beta.9 | **0.3.0** |
 |---|---|---|---|
-| Nom et dossier | `dtdisplay`, fichiers à la racine | `atelierclock.koplugin` | idem |
-| Cadrans | 5 styles codés en dur | 10 cadrans `.clock` v2 (ZIP + JSON + textures), import v1/v2 | idem |
-| Personnalisation | Customizer par menus et curseurs | Collection, variantes, emplacements de complications, éditeur libre v1 | Même périmètre, interface redessinée |
-| Interface | Widgets KOReader | Canevas natif plein écran, pages numérotées | **Canevas animé 30 Hz : défilement inertiel, carrousel, feuilles, transitions** |
-| Affichage | Rafraîchissements KOReader | Rafraîchissements KOReader, fenêtres resserrées (≤ 4) | **Fluid Ink 6.5 embarqué** (Impulsions 2 / v6), repli classique |
-| RTC | Boucle de réveil à la minute | Tâche RTC unique, adaptateur Kobo Aura 2, veille FP9928 | **+ Kindle (powerd/mockrtc), vérification sur 10 modèles, correctifs** |
-| Diagnostic | — | Détails, export JSON, rapport de session | **+ moteur d'affichage et capacité RTC** |
-| Tests | Aucun | 156 | **168** |
-| Licence | AGPL-3.0 | MIT (code) + CC0 (cadrans) | MIT (code Atelier) + moteur GPL/AGPL, ensemble selon `LICENSE` |
+| Name and folder | `dtdisplay`, files at the repository root | `atelierclock.koplugin` | same |
+| Faces | 5 hard-coded styles | 10 `.clock` v2 faces (ZIP + JSON + textures), v1/v2 import | same, English metadata |
+| Customisation | Menu and slider customizer | Collection, variants, complication slots, v1 free editor | Same scope, redesigned interface |
+| Interface | KOReader widgets, English | Native full-screen canvas, numbered pages, French | **Animated 30 Hz canvas: inertial scrolling, carousel, sheets, transitions. English** |
+| Display | KOReader refreshes | KOReader refreshes, tight windows (≤ 4) | **Built-in Fluid Ink 6.5** (Pulses 2 / v6), classic fallback |
+| Refresh profiles | Every minute | 1, 5 or 15 min, or static | **1, 5, 10 or 15 min, or static** |
+| RTC | Minute wake-up loop | Single RTC task, Kobo Aura 2 adapter, FP9928 standby | **+ Kindle (powerd/mockrtc), checked on 10 models, fixes** |
+| Diagnostics | — | Details, JSON export, session report | **+ display engine and RTC capability** |
+| Tests | None | 156 | **169** |
+| Licence | AGPL-3.0 | MIT (code) + CC0 (faces) | MIT (Atelier code) + GPL/AGPL engine; the whole follows `LICENSE` |
 
 ---
 
-## Partie A — de Time & Day à Atelier Clock 0.2.5-beta.9
+## Part A — from Time & Day to Atelier Clock 0.2.5-beta.9
 
-Cette partie résume les bêtas 1 à 9. Atelier Clock y est une réécriture indépendante : son code ne reprend pas celui de *Time & Day* ou de `dtdisplay`.
+This part summarises betas 1 to 9. Atelier Clock is an independent rewrite: its code does not reuse *Time & Day* or `dtdisplay`.
 
 ### Architecture
 
-- Le plugin est découpé en modules :
-  - `core` : réglages, calendrier, fuseaux, collection, import littéral des anciens profils ;
-  - `packages` : lecture et validation ZIP/JSON, export ;
-  - `render` : moteurs v1/v2, tuiles conservées, régions modifiées ;
-  - `power` : tâche RTC, adaptateur Kobo, mesures, preuves noyau ;
-  - `integration` : écran de veille et menus ;
-  - `ui` : galerie et atelier.
-- Un seul service est partagé entre les instances lecteur et gestionnaire de fichiers. Aucun `package.path` global n'est modifié.
-- Les réglages sont validés par schéma, écrits de façon atomique dans `settings/atelierclock/settings.json`, et tolèrent les anciennes valeurs.
+- The plugin is split into modules:
+  - `core`: settings, calendar, time zones, collection, literal import of old profiles;
+  - `packages`: ZIP/JSON reading and validation, export;
+  - `render`: v1/v2 engines, retained tiles, changed regions;
+  - `power`: RTC task, Kobo adapter, measurements, kernel evidence;
+  - `integration`: sleep screen and menus;
+  - `ui`: gallery and studio.
+- One service is shared by the reader and file manager instances. No global `package.path` change.
+- Settings are validated against a schema, written atomically to `settings/atelierclock/settings.json`, and tolerate old values.
 
-### Cadrans
+### Faces
 
-- **Format `.clock` v2** : une archive ZIP DEFLATE avec manifeste JSON, textures PNG originales et aperçu produit par le moteur Lua. Le schéma est dans `docs/clock.schema.json` et `docs/CLOCK_FORMAT.md`. Le format v1 reste lisible.
-- **Dix cadrans originaux** : Totem, Duplex, Index, Halo, Journal, Lisière, Mosaïque, Octant, Typo, Signal. Chacun a une disposition portrait **et** une disposition paysage.
-- **Styles** Plein, Fin et Contour. **Apparences** Papier, Encre et Auto.
-- **Complications hors ligne** : Vide, Date, Batterie, Journée, Semaine, Autre fuseau (transitions IANA 1970–2100 embarquées) et Lecture. Elles existent en trois familles : ligne, anneau et rectangle.
-- **Collection** « Mes cadrans » : jusqu'à 24 variantes indépendantes, à dupliquer, renommer ou retirer.
-- **Import et export** de `.clock` validés, sans écraser un fichier existant.
-- **Profils de réglages** en JSON, plus l'import des anciens fichiers Lua (tables littérales seulement, aucun code exécuté).
+- **`.clock` v2 format**: a ZIP (DEFLATE) holding a JSON manifest, original PNG textures and a preview rendered by the Lua engine. The schema is in `docs/clock.schema.json` and `docs/CLOCK_FORMAT.md`. v1 files remain readable.
+- **Ten original faces**: Totem, Duplex, Index, Halo, Journal, Lisière, Mosaïque, Octant, Typo, Signal. Each has its own portrait **and** landscape layout.
+- **Styles** Bold, Thin and Outline. **Appearances** Paper, Ink and Auto.
+- **Offline complications**: Empty, Date, Battery, Day, Week, World clock (bundled IANA transitions 1970–2100) and Reading, in three families: line, ring and rectangle.
+- **"My faces" collection**: up to 24 independent variants, which can be duplicated, renamed or removed.
+- **`.clock` import and export**, validated, never overwriting an existing file.
+- **Settings profiles** in JSON, plus import of old Lua files (literal tables only, no code executed).
 
-### Rendu
+### Rendering
 
-- Moteur v2 à tuiles conservées : fond, décor et date ne sont pas recalculés chaque minute, et les heures et les minutes sont séparées.
-- Comparaison BB8 des tuiles (`render/delta.lua`), avec au plus quatre fenêtres de rafraîchissement, des lignes identiques sautées par `memcmp` et des replis bornés.
-- Rafraîchissements de veille en mode `ui`, sans consommer le compteur de pages du lecteur. Nettoyages complets configurables.
-- Interface adaptée au DPI réel, réorganisée en paysage et sur les petits écrans.
-- Fonds par image ou en diaporama PNG, réglages par image (`image.png.json`), inversion en mode sombre.
+- v2 engine with retained tiles: background, decoration and date are not redrawn every minute, and hours and minutes are drawn separately.
+- BB8 tile comparison (`render/delta.lua`), with at most four refresh windows, identical rows skipped with `memcmp`, and bounded fallbacks.
+- Sleep refreshes in `ui` mode, without consuming the reader's page counter. Configurable full refreshes.
+- Interface scaled to the real DPI, reflowed for landscape and small screens.
+- Single-image or slideshow PNG backgrounds, per-image settings (`image.png.json`), inversion in dark mode.
 
-### Énergie et RTC
+### Power and RTC
 
-- Une seule tâche RTC, avec une référence de callback stable. Les mutations sont différées hors de `wakeupAction`, la file des autres alarmes est respectée, et l'alarme physique est effacée si elle nous appartient.
-- Profils de fréquence : 1 min, 5 min, 15 min ou statique. Pause nocturne, et seuil de batterie qui arrête les réveils.
-- Garde contre les alarmes trop proches pendant la préparation de la suspension (marge minimale de 4 s).
-- Optimisations Kobo Aura 2 :
-  - réveil prioritaire (`fast_rtc`) ;
-  - réutilisation conditionnelle de la préparation de suspension (`_doSuspend`) ;
-  - relances bornées après un retour court ;
-  - veille native jusqu'à l'alarme minute quand le refus FP9928 est confirmé (bêta 9).
-- Mesures du sommeil (horloges BOOTTIME/MONOTONIC), lecture bornée du journal noyau, rapports `diagnostic.json` et `last-session.json`.
+- One RTC task with a stable callback reference. Changes are deferred out of `wakeupAction`, other alarms in the queue are respected, and the physical alarm is cleared when it belongs to the plugin.
+- Refresh profiles: 1, 5 or 15 minutes, or static. Night pause, and a battery threshold that stops wake-ups.
+- Guard against alarms that fall during suspend preparation (4 s minimum lead).
+- Kobo Aura 2 optimisations:
+  - priority wake-up (`fast_rtc`);
+  - conditional reuse of the suspend preparation (`_doSuspend`);
+  - bounded retries after a short return;
+  - native standby until the minute alarm once the FP9928 refusal is confirmed (beta 9).
+- Sleep measurements (BOOTTIME/MONOTONIC clocks), bounded kernel log reading, `diagnostic.json` and `last-session.json` reports.
 
-### Interface 0.2.5
+### 0.2.5 interface
 
-- Atelier plein écran à quatre onglets : Cadrans, Modifier, Veille, Diagnostic.
-- Navigateur de cadrans à flèches et balayage, catalogue « + Ajouter ».
-- Éditeur par emplacements avec sélecteur de complications rendues en direct.
-- Brouillon avec Annuler et Appliquer.
-- Diagnostic paginé.
+- Full-screen studio with four tabs: Faces, Edit, Sleep and Diagnostics. French labels.
+- Face browser with arrows and swipes, "+ Add" catalogue.
+- Slot editor with a complication picker that renders each complication live.
+- Draft with Cancel and Apply.
+- Paginated diagnostics.
 
 ### Validation
 
-- 156 tests sur ordinateur, avec LuaJIT, les vrais modules KOReader épinglés et libarchive.
-- Rejeux des sessions utilisateur, simulations PMIC et RTC.
-- Intégration native KOReader sur x86_64 et ARMv7 (QEMU).
-- Aucune mesure électrique n'est revendiquée.
+- 156 desktop tests, with LuaJIT, pinned real KOReader modules and libarchive.
+- Replays of user sessions, PMIC and RTC simulations.
+- Native KOReader integration on x86_64 and ARMv7 (QEMU).
+- No electrical measurement is claimed.
 
 ---
 
-## Partie B — de 0.2.5-beta.9 à 0.3.0 (ce travail)
+## Part B — from 0.2.5-beta.9 to 0.3.0 (this work)
 
-### 1. Moteur Fluid Ink 6.5 intégré
+### 1. Built-in Fluid Ink 6.5 engine
 
-**Nouveaux fichiers**
+**New files**
 
-- `engine/fluidink/` : copie **non modifiée** des fichiers `native.lua`, `platform.lua` et `startup.lua`, des binaires `libinkmotion-arm.so` et `libinkmotion-kindlepw2.so` (ABI 6500), et de `noise64.bin`, `COPYING` et `THIRD_PARTY_NOTICES.md`.
-- `third_party/fluid-ink/` : les sources C correspondantes, le script de compilation et les documents de protocole. La copie personnelle `factory-reference.bin` n'est **pas** redistribuée (voir `.gitignore`).
-- `engine/profile.lua` choisit le profil d'affichage :
+- `engine/fluidink/`: **unmodified** copy of `native.lua`, `platform.lua` and `startup.lua`, the binaries `libinkmotion-arm.so` and `libinkmotion-kindlepw2.so` (ABI 6500), `noise64.bin`, `COPYING` and `THIRD_PARTY_NOTICES.md`.
+- `third_party/fluid-ink/`: the matching C sources, build script and protocol documents. The personal copy `factory-reference.bin` is **not** redistributed (see `.gitignore`).
+- `engine/profile.lua` picks the display profile:
 
-| Cas | Profil |
+| Case | Profile |
 |---|---|
-| `Kobo_star` avec chemin personnalisé vérifié | **Fluid Ink v6** (conduite 12), **Impulsions 2**, **Débit** (file 1, Bayer 8×8, sans gamma), A2, 30 ips |
-| Autres modèles compatibles | **v6 sans impulsions** (conduite 2 constructeur, ou 12 en personnalisé), A2 en mouvement et DU au repos |
-| Impulsions refusées (`phase_errno`) | Bascule vers v6 sans impulsions, sans quitter le moteur |
-| Réglage « Classique », ou modèle hors liste | Classique |
+| `Kobo_star` with a verified custom path | **Fluid Ink v6** (policy 12), **Pulses 2**, **Throughput** (queue 1, Bayer 8×8, no gamma), A2, 30 fps |
+| Other compatible models | **v6 without pulses** (vendor policy 2, or 12 on the custom path), A2 while moving and DU at rest |
+| Pulses refused (`phase_errno`) | Switches to v6 without pulses without leaving the engine |
+| "Classic" setting, or model not on the list | Classic |
 
-- `engine/display.lua` est le seul propriétaire de l'écran de l'atelier. Il reproduit le cycle de vie de `demo.lua` de Fluid Ink :
-  - vérification RAM dans un processus enfant (`startup.lua`), dont le résultat est gardé en cache pour la session ;
-  - démarrage du worker, puis `setPhase(2, 12)` sur l'Aura 2 v1 ;
-  - publication des images avec l'indicateur de repos (`im_set_still`) ;
-  - surveillance des erreurs EPDC, de l'arrêt du worker et du chien de garde : attente de la neutralisation, libération, puis repli classique ;
-  - libération asynchrone (stop → reap → `free`, qui restaure la LUT et la capture) et version synchrone bornée pour la veille et la fermeture d'urgence ;
-  - reprise après une saisie de texte ou un réveil.
-- Le moteur reste inactif en paysage, en mode nuit, sans framebuffer mxcfb, ou si la vérification échoue. La raison s'affiche dans le Diagnostic.
+- `engine/display.lua` is the single owner of the studio's screen. It follows the lifecycle of Fluid Ink's `demo.lua`:
+  - RAM check in a child process (`startup.lua`), with the result cached for the session;
+  - worker start, then `setPhase(2, 12)` on the Aura 2 v1;
+  - frame publishing with the rest flag (`im_set_still`);
+  - monitoring of EPDC errors, worker exit and the watchdog: wait for neutralisation, free, then fall back to classic;
+  - asynchronous release (stop → reap → `free`, which restores the LUT and capture), plus a bounded synchronous release for sleep and emergency close;
+  - resume after text entry or wake-up.
+- The engine stays off in landscape, in night mode, without an mxcfb framebuffer, or when the check fails. The reason is shown in Diagnostics.
 
-**Nouveaux réglages** : `display_engine` (auto, fluid, classic), `display_fps` (30, 45, 60), `display_rest` et `motion` (full, reduced). Ils sont validés dans `core/settings.lua`.
+**New settings**: `display_engine` (auto, fluid, classic), `display_fps` (30, 45, 60), `display_rest` and `motion` (full, reduced). They are validated in `core/settings.lua`.
 
-**Diagnostic**
+**Diagnostics**
 
-- La section *Affichage* montre le moteur actif, le profil, les cibles et scans par seconde en direct, et les réglages. Elle propose aussi « Nettoyer l'écran » et « Réessayer le moteur fluide ».
-- `diagnostic.json` contient désormais `display` et `rtc_capability`.
+- The *Display* section shows the active engine, its profile, live targets and scans per second, and the settings. It also offers "Clean the screen" and "Retry the fluid engine".
+- `diagnostic.json` now includes `display` and `rtc_capability`.
 
-### 2. Interface redessinée pour 30 Hz
+### 2. Interface redesigned for 30 Hz
 
-Le rendu est entièrement nouveau (`ui/studio.lua`, `ui/views.lua`, `ui/faces.lua`, `ui/studio_actions.lua`) :
+The rendering is entirely new (`ui/studio.lua`, `ui/views.lua`, `ui/faces.lua`, `ui/studio_actions.lua`):
 
-- **Composition par couches** dans un tampon 8 bits : en-tête, contenu défilant, carrousel, barre de brouillon, notification, barre d'onglets, feuille.
-  - Les textes et les aperçus de cadrans sont rendus une fois et gardés en cache.
-  - Chaque image n'est qu'un assemblage de blits, plus quelques formes.
-  - Les éléments animés (interrupteurs, compteurs, segments, curseurs) se redessinent sur place.
-- **Boucle d'animation unique** à la cadence choisie, avec saut des échéances manquées et jamais de file d'images anciennes. Elle s'arrête au repos, publie une dernière image « immobile », puis une surveillance lente prend le relais.
-- **En mode classique ou en animations réduites**, tout se termine immédiatement. Pendant un glissement du doigt, au plus un rafraîchissement `fast` toutes les 0,2 s.
-- **`ui/motion.lua`** : interpolations, ressorts amortis, défileur inertiel (vitesse filtrée et décroissance exponentielle, à la manière de `engine.lua`) avec bord élastique continu et accrochage, et gestion des échéances.
-- **`ui/kit.lua`** : système visuel complet.
-  - Couleurs : papier, encre, et trois gris clairs (lavis, ombre, filet).
-  - Tailles de texte : 6.
-  - Composants : cartes à ombre douce, boutons en pilule, bouton icône, interrupteur, contrôle segmenté, ligne de réglage, titres de section, jauge, points de pagination.
-  - Majuscules accentuées correctes.
-- **`render/draw.lua`** : rectangles arrondis et contours par lignes de balayage, traits à bouts ronds, arcs.
-- **`ui/icons.lua`** : 38 icônes redessinées sur une grille de 24, avec un trait arrondi.
+- **Layered composition** into an 8-bit buffer: header, scrolling content, carousel, draft bar, toast, tab bar, sheet.
+  - Text and face previews are rendered once and cached.
+  - Each frame is just a set of blits plus a few shapes.
+  - Animated elements (switches, counters, segments, sliders) are redrawn in place.
+- **A single animation loop** at the chosen frame rate. It skips missed deadlines and never queues stale frames. At rest it stops, publishes one last "still" frame, and a slow health watch takes over.
+- **In classic mode or with reduced animations**, everything jumps to its final state. While a finger is dragging, there is at most one `fast` refresh every 0.2 s.
+- **`ui/motion.lua`**: easing, damped springs, an inertial scroller (filtered velocity and exponential decay, in the spirit of `engine.lua`) with a continuous elastic edge and snapping, and deadline handling.
+- **`ui/kit.lua`**: a complete visual system.
+  - Colours: paper, ink, and three light greys (wash, shadow, hairline).
+  - Text sizes: 6.
+  - Components: cards with soft shadows, pill buttons, icon button, switch, segmented control, settings row, section titles, gauge, page dots.
+- **`render/draw.lua`**: rounded rectangles and outlines drawn by scanline, round-capped strokes, arcs.
+- **`ui/icons.lua`**: 38 redrawn icons on a 24-unit grid, with rounded strokes.
 
-**Écran par écran**
+**Screen by screen**
 
-- **Cadrans**
-  - Carrousel : glisser, lancer (au moins une carte, au plus trois), accrocher. Les voisins dépassent et s'estompent, avec des points de pagination.
-  - Bascule *Mes cadrans / Catalogue* à pastille glissante.
-  - Actions ⋯, Modifier, Utiliser et Afficher. La feuille ⋯ propose Dupliquer, Renommer, Afficher et Retirer.
-  - Un appui long sur la carte ouvre les actions.
-- **Modifier**
-  - Segments *Style / Modules / Options* avec transition latérale. Un balayage horizontal change de mode.
-  - Les emplacements portent une pastille « + ».
-  - La **feuille des modules** montre les complications rendues en direct. Quand on choisit, un cadre vole jusqu'à l'emplacement puis pulse.
-  - Style : pastilles de spécimen « 12 », et Papier / Encre / Auto avec icônes.
-  - Options : liste groupée (nom, export, orientation, format, langue, date, taille de l'interface).
-- **Veille**
-  - Carte principale avec l'interrupteur de l'écran de veille.
-  - Fréquence en contrôle segmenté, avec la précision sous le contrôle.
-  - Carte *Réveil* : capacité RTC du modèle, réveil prioritaire Aura 2, « Optimiser pour Aura 2 ».
-  - Réglages avancés dans la même liste défilante, sans sous-page.
-- **Diagnostic**
-  - Jauge de batterie et compteurs qui montent jusqu'à leur valeur.
-  - Prochaine actualisation et section Affichage.
-  - Outils : détails techniques dépliés dans la liste, export et profil.
-- **Éditeur libre v1** : aperçu déplaçable, choix de l'élément dans une feuille, six tuiles de sections, réglages en liste.
+- **Faces**
+  - Carousel: drag, fling (at least one card, at most three), snap. Neighbours peek in and fade, with page dots.
+  - *My faces / Catalogue* switch with a gliding pill.
+  - ⋯, Edit, Use and Show buttons. The ⋯ sheet offers Duplicate, Rename, Show full screen and Remove.
+  - A long press on the card opens the actions.
+- **Edit**
+  - *Style / Modules / Options* segments with a sideways transition. A horizontal swipe changes mode.
+  - Slots carry a "+" badge.
+  - The **modules sheet** shows each complication rendered live. When you pick one, a frame flies to its slot and pulses.
+  - Style: "12" specimen chips, and Paper / Ink / Auto with icons.
+  - Options: grouped list (name, export, orientation, time format, clock language, date, interface size).
+- **Sleep**
+  - Main card with the sleep screen switch.
+  - Refresh as a segmented control, with its precision shown underneath.
+  - *Wake-up* card: the model's RTC capability, Aura 2 priority wake-up, "Optimise for Aura 2".
+  - Advanced settings in the same scrolling list, with no sub-page.
+- **Diagnostics**
+  - Battery gauge and counters that count up to their value.
+  - Next update and Display section.
+  - Tools: technical details expanded inline, export and profile.
+- **v1 free editor**: draggable preview, element choice in a sheet, six section tiles, settings as a list.
 
 **Navigation**
 
-- Barre d'onglets à pastille glissante, transitions latérales entre les onglets, balayage horizontal pour changer d'onglet.
-- Bouton Retour dans l'en-tête des sous-vues, touche Retour qui ferme d'abord la feuille ouverte.
-- Retour visuel d'appui : légère teinte sur la zone touchée. Le doigt arrête net un défilement en cours.
+- Tab bar with a gliding pill, sideways transitions between tabs, horizontal swipe to change tab.
+- Back button in the header of sub-views; the Back key closes the open sheet first.
+- Touch feedback: a light tint on the touched area. A finger stops a running scroll dead.
 
-**Autres changements**
+**Other changes**
 
-- Confirmations et choix dans des feuilles maison : KOReader ne reprend plus l'écran pour un simple « Retirer ? ».
-- Notifications brèves à la place de la ligne d'état.
-- Barre *Brouillon* qui n'apparaît que lorsqu'il y a des modifications.
-- « Afficher » zoome l'aperçu jusqu'au plein écran avec le redimensionneur MuPDF de KOReader. S'il n'est pas disponible, l'aperçu se révèle par recadrage, jamais par la boucle Lua `BlitBuffer:scale`.
-- Changement de rotation : libération du moteur, puis nouvelle mise en page.
-- Mise en veille : arrêt synchrone, avant que l'écran de veille ne dessine.
+- Confirmations and choices in custom sheets: KOReader no longer takes the screen back for a simple "Remove?".
+- Short toasts instead of the status line.
+- The *Draft* bar appears only when there are changes.
+- "Show" zooms the preview to full screen with KOReader's MuPDF scaler. If it is unavailable, the preview is revealed by cropping, never by the `BlitBuffer:scale` Lua loop.
+- Rotation change: the engine is released, then the layout is rebuilt.
+- Sleep: synchronous stop, before the sleep screen draws.
 
-### 3. RTC sur toutes les liseuses compatibles
+### 3. English interface, 10-minute refresh
 
-- `power/capabilities.lua` détecte, d'après les classes d'appareils de KOReader, si le réveil passe par le RTC Kobo, par powerd sur Kindle, ou s'il est indisponible.
-- `power/kindle.lua` est nouveau. Sur Kindle, powerd suspend la liseuse et KOReader programme `setRtcWakeup` à `readyToSuspend`. Un garde placé juste après chaque échéance appelle `recoverDue()` dans deux cas :
-  - la liseuse est restée éveillée en mode écran de veille ;
-  - `readyToSuspend` a supprimé une alarme déjà passée.
+- **The whole interface is in English**: studio, sheets, toasts, settings labels, Diagnostics, KOReader menus and Dispatcher actions, sleep-screen menu entry ("Atelier clock"), notices, RTC reasons, and `.clock` import and validation errors.
+- **Face manifests in English**: subtitles, categories, slot names, author, and Index's "THROUGH THE DAY" label. The ten faces were regenerated with `tools/build_assets.py`. Face names stay as they are (Totem, Lisière, Mosaïque…).
+- **Clock language**: faces keep their *Clock language* setting (English or French). The default for new installations is now English; a saved setting is kept. Status notes drawn on the clock (low battery, no RTC, updates stopped, "≈ updated every N min") follow that language.
+- **Fix**: the English time in words (Typo face) used to read "14 hours / 37 minutes". It now reads "two / thirty-seven", "seven / o'clock", "noon / exactly".
+- **New 10-minute refresh profile**: a *10 min* segment in Sleep, validated in the settings, scheduled with alignment on the 10-minute mark, and shown on the clock as "≈ UPDATED EVERY 10 MIN". Neither Time & Day (every minute only) nor 0.2.5-beta.9 (1/5/15 min, static) had it.
 
-  Il n'exécute jamais le callback d'une autre tâche.
-- **Correctif** : sans `WakeupMgr`, la session était marquée active sans alarme. Elle est maintenant inactive, et le message « RTC INDISPONIBLE / HEURE FIGÉE » s'affiche.
-- **Correctif** : sur un RTC i.MX5 (`dodgy_rtc`), le premier maillon de la chaîne d'alarmes d'une longue pause nocturne restait programmé après l'arrêt. Il est maintenant effacé s'il nous appartient.
-- Diagnostic et rapport : capacité RTC, et rattrapages Kindle.
+### 4. RTC on every compatible reader
 
-### 4. Tests et outils
+- `power/capabilities.lua` works out, from KOReader's device classes, whether wake-up goes through the Kobo RTC, through powerd on Kindle, or is unavailable.
+- `power/kindle.lua` is new. On Kindle, powerd suspends the reader and KOReader calls `setRtcWakeup` on `readyToSuspend`. A guard placed just after each deadline calls `recoverDue()` in two cases:
+  - the reader stayed awake in sleep-screen mode;
+  - `readyToSuspend` dropped an alarm that was already in the past.
 
-- **`tests/test_rtc_devices.py`** (nouveau, 4 tests) : les 7 Kobo, la chaîne `dodgy_rtc`, et les 3 Kindle dans quatre scénarios (réveil programmé avec avance de 10 s, éveil prolongé, alarme supprimée, arrêt), plus un Kindle sans écran de veille KOReader. Ces tests utilisent le vrai `wakeupmgr.lua`, le vrai `kindle/mockrtc.lua` et les fonctions de réveil de `kindle/powerd.lua`.
-- **`tests/test_fluid_ui.py`** (nouveau, 8 tests) :
-  - profils par modèle et modèles de mouvement ;
-  - démarrage Impulsions 2 / Débit sans aucun rafraîchissement KOReader pendant le moteur ;
-  - carrousel et feuille des modules ;
-  - saisie de texte avec libération puis reprise ;
-  - veille et réveil, impulsions refusées, chien de garde ;
-  - animations réduites et interrupteur animé ;
-  - images en mouvement.
-- Tests existants adaptés :
-  - le test de contraste admet les trois gris du système visuel, mais interdit toujours les aplats de gris moyen ;
-  - la version est lue depuis `core/version.lua`.
-- Le harnais gagne `darkenRect`, `lightenRect` et un `ui/renderimage` de test. `fetch_test_dependencies.py` récupère `kindle/mockrtc.lua` et `kindle/powerd.lua`.
-- **`tools/build_screenshots.py`** produit les captures et les GIF à partir d'images réellement publiées à 30 Hz, avec une horloge déterministe, plus une simulation du tramage Bayer 8×8.
-- `tools/build_release.py` : version 0.3.0, au moins 168 tests, et bloc `display` / `rtc_models` dans `RELEASE.json`.
-- Le validateur KOReader (skill `koreader-plugin`) : 0 erreur. Le seul avertissement concerne le champ `name` de `_meta.lua`, conservé.
+  It never runs another task's callback.
+- **Fix**: without `WakeupMgr`, the session was marked active with no alarm. It is now inactive, and the "no RTC / time frozen" note is shown.
+- **Fix**: on an i.MX5 RTC (`dodgy_rtc`), the first link of the alarm chain for a long night pause stayed programmed after stopping. It is now cleared when it belongs to the plugin.
+- Diagnostics and report: RTC capability and Kindle recoveries.
 
-### 5. Dépôt et documentation
+### 5. Tests and tools
 
-- Le dépôt adopte la structure Atelier : `atelierclock.koplugin/`, `tools/`, `tests/`, `validation/`, `third_party/` et `docs/media/`. Les anciens fichiers de *Time & Day* restent dans l'historique git.
-- Nouveaux `README.md`, `CHANGELOG.md` et `docs/FONCTIONS.md`. Mise à jour du README du plugin et de `DEVELOPPEMENT.md`.
-- Licences : le code Atelier reste MIT et les cadrans CC0. Le moteur porte des en-têtes GPL-3.0-or-later, mais son paquet est livré avec le texte de l'AGPL-3.0 : ce point est à confirmer par l'auteur du moteur. L'ensemble distribué suit le fichier `LICENSE` (AGPL-3.0, comme le dépôt auparavant).
+- **`tests/test_rtc_devices.py`** (new, 5 tests):
+  - the 7 Kobo models;
+  - the `dodgy_rtc` chain;
+  - the 3 Kindles in four scenarios: scheduled wake-up 10 s early, prolonged wake, dropped alarm, stop;
+  - a Kindle without the KOReader sleep screen;
+  - the complete 10-minute profile: settings, Sleep tab, scheduler.
 
-### Limites connues
+  These tests use the real `wakeupmgr.lua`, the real `kindle/mockrtc.lua` and the wake-up functions of `kindle/powerd.lua`.
+- **`tests/test_fluid_ui.py`** (new, 8 tests):
+  - profiles per model and motion models;
+  - start with Pulses 2 / Throughput, with no KOReader refresh while the engine runs;
+  - carousel and modules sheet;
+  - text entry with release then resume;
+  - sleep and wake, refused pulses, watchdog;
+  - reduced animations and animated switch;
+  - frames in motion.
+- Existing tests adapted:
+  - the contrast test allows the three greys of the visual system but still bans mid-grey fills;
+  - the version is read from `core/version.lua`.
+- The test harness gains `darkenRect`, `lightenRect` and a test `ui/renderimage`. `fetch_test_dependencies.py` fetches `kindle/mockrtc.lua` and `kindle/powerd.lua`.
+- **`tools/build_screenshots.py`** produces the screenshots and GIFs from frames actually published at 30 Hz on a deterministic clock, plus a simulation of the Bayer 8×8 dithering.
+- `tools/build_release.py`: version 0.3.0, at least 168 tests, and a `display` / `rtc_models` block in `RELEASE.json`.
+- KOReader's plugin validator (skill `koreader-plugin`): 0 errors. The only warning concerns the `name` field of `_meta.lua`, which is kept.
 
-- Aucune mesure sur liseuse n'a été possible ici. La cadence optique, le contraste, les traces, le coût CPU du rendu de l'atelier à 30 Hz et le réveil Kindle restent à vérifier sur appareil.
-- Les polices des captures sont des substituts (DejaVu).
+### 6. Repository and documentation
+
+- The repository adopts the Atelier layout: `atelierclock.koplugin/`, `tools/`, `tests/`, `validation/`, `third_party/` and `docs/media/`. The old *Time & Day* files remain in the git history.
+- `README.md`, `CHANGELOG.md`, `docs/FEATURES.md` and the plugin README are in English.
+- The developer and investigation notes (`DEVELOPPEMENT.md`, `docs/INVESTIGATION_*`, `docs/VALIDATION.md`, `docs/POWER_AURA2.md`) remain in French.
+- Licences: Atelier code stays MIT and faces CC0. The engine's headers say GPL-3.0-or-later, but its package ships the AGPL-3.0 text; this should be confirmed by the engine's author. The distributed whole follows `LICENSE` (AGPL-3.0, as the repository did before).
+
+### Known limits
+
+- No measurement on a reader was possible here. Optical cadence, contrast, ghosting, the CPU cost of the studio at 30 Hz and Kindle wake-up still need to be checked on hardware.
+- Screenshot fonts are substitutes (DejaVu).
 
 ---
 
-## Partie C — Que sont devenues les fonctions de Time & Day ?
+## Part C — What became of the Time & Day features?
 
 | Time & Day (GitHub) | Atelier Clock 0.3.0 |
 |---|---|
-| Style **Classic** (heure, date, batterie) | Cadrans Mosaïque, Duplex, Signal, et tout cadran avec les complications Date et Batterie |
-| Style **Fullscreen** (chiffres empilés) | Cadran **Totem** |
-| Style **Outlined** (contour sur fond PNG) | Style **Contour**, réglage *Contour des chiffres* de l'éditeur v1, fonds PNG |
-| Style **Analog** (graduations, aiguilles, chiffres) | Cadrans **Halo** et **Octant**. Éditeur v1 : chiffres arabes, romains ou aucun, épaisseur des aiguilles |
-| **Word Clock** (heure en toutes lettres) | Cadran **Typo**, en français et en anglais |
-| Customizer visuel par appui long | Appui long sur l'horloge → **atelier**, avec aperçu en direct et brouillon |
-| Auto-layout anti-chevauchement, espacement | Emplacements conçus des cadrans v2. Éditeur v1 : *Disposition automatique* et *Espacement* |
-| Séparateurs et cadres décoratifs | Éditeur v1 → Habillage : *Séparateur* (ligne, points, losange, ornement) et *Cadre* (simple, double, coins) |
-| Polices de l'heure et de la date | Éditeur v1 → Typographie : police par élément (nom KOReader ou chemin TTF) |
-| Taille du texte | Taille par élément, échelle du cadran, taille de l'interface |
-| Format 12/24 h, orientation, mode nuit | Options : format, orientation (suivre ou quatre sens). Apparence Papier, Encre ou Auto (mode nuit) |
-| Superposition PNG, image ou dossier, intervalle | Éditeur v1 → Images : image unique ou diaporama, portrait et paysage, durée, inversion en mode sombre |
-| Rafraîchissement complet au changement d'image | *Nettoyer l'écran au changement* |
-| Réglages par image (`*.lua`) | Réglages par image `image.png.json`, plus import des anciens profils Lua (tables littérales) |
-| Éclairage de l'horloge (-1 = désactivé) | *Éclairage manuel* (-1 = conserver) |
-| Intervalle de rafraîchissement complet | *Nettoyage complet* (minutes, 0 = désactivé) |
-| Durée d'éveil du CPU après rafraîchissement | *Marge après fin d'affichage* (0,1 à 5 s) |
-| Réveil RTC à la minute, suspension rapide | Tâche RTC unique et profils 1, 5 ou 15 min ou statique. Optimisations Aura 2, Kindle via powerd |
-| Lancement par menu et action Dispatcher | **Outils → Plus d'outils → Atelier Clock**, actions *atelier* et *afficher* |
-| Option d'écran de veille « Show clock on sleep screen » | Option **Horloge Atelier** dans le menu de veille, et interrupteur dans **Veille** |
+| **Classic** style (time, date, battery) | Mosaïque, Duplex and Signal faces, and any face with the Date and Battery complications |
+| **Fullscreen** style (stacked digits) | **Totem** face |
+| **Outlined** style (outline over a PNG background) | **Outline** style, the v1 editor's *Digit outline* setting, PNG backgrounds |
+| **Analog** style (ticks, hands, numerals) | **Halo** and **Octant** faces. v1 editor: Arabic, Roman or no numerals, hand widths |
+| **Word Clock** (time spelled out) | **Typo** face, in English and French |
+| Visual customizer on long press | Long press on the clock → **studio**, with live preview and draft |
+| Overlap-free auto-layout, spacing | Designed slots in v2 faces. v1 editor: *Automatic layout* and *Spacing* |
+| Decorative separators and frames | v1 editor → Finish: *Separator* (line, dots, diamond, ornament) and *Frame* (simple, double, corners) |
+| Time and date fonts | v1 editor → Typography: font per element (KOReader name or TTF path) |
+| Text size | Size per element, face scale, interface size |
+| 12/24 h format, orientation, night mode | Options: time format, orientation (follow KOReader or four directions). Paper, Ink or Auto appearance (night mode) |
+| PNG overlay, image or folder, interval | v1 editor → Images: single image or slideshow, portrait and landscape, duration, inversion in dark mode |
+| Full refresh on image change | *Clean the screen on change* |
+| Per-image settings (`*.lua`) | Per-image settings `image.png.json`, plus import of old Lua profiles (literal tables) |
+| Clock frontlight (-1 = off) | *Frontlight* (-1 = keep) |
+| Full refresh interval | *Full refresh* (minutes, 0 = off) |
+| CPU awake time after refresh | *Margin after the display finishes* (0.1 to 5 s) |
+| Per-minute RTC wake-up, fast suspend | Single RTC task and profiles of 1, 5, 10 or 15 min, or static. Aura 2 optimisations, Kindle through powerd |
+| Menu launch and Dispatcher action | **Tools → More tools → Atelier Clock**, actions *open the studio* and *show the clock* |
+| "Show clock on sleep screen" sleep screen option | **Atelier clock** option in the sleep screen menu, and the switch in **Sleep** |

@@ -84,7 +84,7 @@ function S:run()
         self.data.early_wakes=self.data.early_wakes+1
     else
         self.disabled=true;self.data.failures=self.data.failures+1
-        self.data.reason=tostring(err or "Veille minute refusée ou réveils anticipés répétés")
+        self.data.reason=tostring(err or "Minute standby refused or repeated early wake-ups")
         self.data.kernel_failure=Evidence.since(k.kernel_cursor,Evidence.capture(d))
         logger.warn("AtelierClock",load("core/version"),"minute standby fallback",self.data.reason)
         local failure=self.data.kernel_failure

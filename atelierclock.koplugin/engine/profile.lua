@@ -36,25 +36,25 @@ end
 function P.select(model,platform,settings,reason)
     settings=settings or {}
     local wanted=settings.display_engine or "auto"
-    local classic={engine="classic",fps=fps(settings),label="Classique KOReader",
-        detail=reason or "Moteur fluide non disponible sur ce modèle"}
-    if wanted=="classic"then classic.detail="Choisi dans les réglages";return classic end
+    local classic={engine="classic",fps=fps(settings),label="Classic KOReader",
+        detail=reason or "Fluid engine not available on this model"}
+    if wanted=="classic"then classic.detail="Chosen in settings";return classic end
     if not platform then return classic end
     local p={engine="fluid",fps=fps(settings),window=P.DEBIT.window,dither=P.DEBIT.dither,gamma=P.DEBIT.gamma,
         model=model,model_name=P.models[model]or tostring(model)}
     if platform.custom and model=="Kobo_star"then
         -- Aura 2 v1: Fluid Ink v6 with « Impulsions 2 », Débit, 30 Hz target.
-        p.name="pulses";p.label="Fluide 30 Hz · Impulsions 2"
+        p.name="pulses";p.label="Fluid 30 Hz · Pulses 2"
         p.drive_policy=P.FLUID_V6;p.phase=2;p.capture=true
         p.wave="a2";p.wave_still="a2"
-        p.detail="Fluid Ink v6 · Impulsions 2 · Débit"
+        p.detail="Fluid Ink v6 · Pulses 2 · Throughput"
     else
         -- Other compatible readers: v6 fallback without the pulse profile.
-        p.name="fallback";p.label="Fluide v6 · sans impulsions"
+        p.name="fallback";p.label="Fluid v6 · no pulses"
         p.drive_policy=platform.custom and P.FLUID_V6 or P.VENDOR_FAST;p.phase=0
         p.capture=platform.custom and true or false
         p.wave="a2";p.wave_still=platform.custom and "a2"or "du"
-        p.detail=(platform.custom and "Fluid Ink v6"or "Fluid Ink v6 · mode constructeur "..tostring(platform.name)).." · Débit"
+        p.detail=(platform.custom and "Fluid Ink v6"or "Fluid Ink v6 · vendor mode "..tostring(platform.name)).." · Throughput"
     end
     return p
 end
@@ -62,8 +62,8 @@ end
 -- Pulses refused by the kernel/reference: keep Fluid Ink v6, without pulses.
 function P.withoutPulses(p,errno)
     local r={};for k,v in pairs(p)do r[k]=v end
-    r.name="fallback";r.phase=0;r.label="Fluide v6 · sans impulsions"
-    r.detail="Impulsions refusées"..(errno and(" (errno "..errno..")")or "").." · Fluid Ink v6 · Débit"
+    r.name="fallback";r.phase=0;r.label="Fluid v6 · no pulses"
+    r.detail="Pulses refused"..(errno and(" (errno "..errno..")")or "").." · Fluid Ink v6 · Throughput"
     return r
 end
 

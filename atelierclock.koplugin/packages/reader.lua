@@ -10,86 +10,86 @@ local function depth(s)
     for i=1,#s do local c=s:sub(i,i)
         if escape then escape=false elseif quoted and c=="\\" then escape=true elseif c=='"' then quoted=not quoted
         elseif not quoted then
-            if c=="{" or c=="[" then n=n+1;assert(n<=24,"JSON trop profond")
+            if c=="{" or c=="[" then n=n+1;assert(n<=24,"JSON too deep")
             elseif c=="}" or c=="]" then n=n-1 end
         end
     end
 end
 function R.validate(m,entries)
-    assert(type(m)=="table" and m.format=="atelier-clock" and (m.schema_version==1 or m.schema_version==2),"Format .clock inconnu")
+    assert(type(m)=="table" and m.format=="atelier-clock" and (m.schema_version==1 or m.schema_version==2),"Unknown .clock format")
     if m.engine_min~=nil then
-        assert(type(m.engine_min)=="string","Version du moteur invalide")
+        assert(type(m.engine_min)=="string","Invalid engine version")
         local major,minor,patch=m.engine_min:match("^(%d+)%.(%d+)%.(%d+)$")
-        assert(major and tonumber(major)==0 and tonumber(minor)<=2 and (tonumber(minor)<2 or tonumber(patch)==0),"Moteur du plugin trop ancien")
+        assert(major and tonumber(major)==0 and tonumber(minor)<=2 and (tonumber(minor)<2 or tonumber(patch)==0),"Plugin engine too old")
     end
-    assert(type(m.id)=="string" and #m.id<=64 and m.id:match("^[a-z][a-z0-9_-]+$"),"Identifiant invalide")
-    assert(type(m.name)=="string" and #m.name>0 and #m.name<100,"Nom invalide")
-    assert(m.order==nil or finite(m.order,0,10000),"Ordre invalide")
-    assert(m.subtitle==nil or type(m.subtitle)=="string" and #m.subtitle<150,"Sous-titre invalide")
-    assert(type(m.author)=="string" and type(m.license)=="string","Auteur/licence absents")
-    assert(type(m.canvas)=="table" and finite(m.canvas.width,100,3000) and finite(m.canvas.height,100,3000),"Dimensions invalides")
+    assert(type(m.id)=="string" and #m.id<=64 and m.id:match("^[a-z][a-z0-9_-]+$"),"Invalid identifier")
+    assert(type(m.name)=="string" and #m.name>0 and #m.name<100,"Invalid name")
+    assert(m.order==nil or finite(m.order,0,10000),"Invalid order")
+    assert(m.subtitle==nil or type(m.subtitle)=="string" and #m.subtitle<150,"Invalid subtitle")
+    assert(type(m.author)=="string" and type(m.license)=="string","Missing author/licence")
+    assert(type(m.canvas)=="table" and finite(m.canvas.width,100,3000) and finite(m.canvas.height,100,3000),"Invalid dimensions")
     if m.schema_version==2 then return load("packages/v2").validate(m,entries) end
-    assert(type(m.layers)=="table" and #m.layers>0 and #m.layers<=48,"Calques invalides")
-    assert(type(m.assets)=="table" and type(m.preview)=="string" and entries[m.preview],"Ressources absentes")
-    for id,path in pairs(m.assets) do assert(type(id)=="string" and type(path)=="string" and entries[path] and path:match("%.png$"),"Texture absente") end
+    assert(type(m.layers)=="table" and #m.layers>0 and #m.layers<=48,"Invalid layers")
+    assert(type(m.assets)=="table" and type(m.preview)=="string" and entries[m.preview],"Missing resources")
+    for id,path in pairs(m.assets) do assert(type(id)=="string" and type(path)=="string" and entries[path] and path:match("%.png$"),"Missing texture") end
     local ids={}
     for _,l in ipairs(m.layers) do
-        assert(type(l)=="table" and allowed[l.type],"Type de calque inconnu")
-        assert(type(l.id)=="string" and not ids[l.id],"Identifiant de calque dupliqué");ids[l.id]=true
-        if l.type=="image" then assert(m.assets[l.asset],"Texture inconnue") end
-        if l.source then assert(sources[l.source],"Source inconnue") end
+        assert(type(l)=="table" and allowed[l.type],"Unknown layer type")
+        assert(type(l.id)=="string" and not ids[l.id],"Duplicate layer identifier");ids[l.id]=true
+        if l.type=="image" then assert(m.assets[l.asset],"Unknown texture") end
+        if l.source then assert(sources[l.source],"Unknown source") end
         for _,key in ipairs({"x","y","w","h","size","z","width","radius"}) do
-            if l[key]~=nil then assert(finite(l[key],-3000,3000),"Coordonnée invalide") end
+            if l[key]~=nil then assert(finite(l[key],-3000,3000),"Invalid coordinate") end
         end
-        assert(l.text==nil or type(l.text)=="string" and #l.text<=256,"Texte invalide")
-        assert(l.align==nil or l.align=="left" or l.align=="center" or l.align=="right","Alignement invalide")
-        assert(l.grey==nil or finite(l.grey,0,255),"Couleur invalide")
-        assert(l.bold==nil or type(l.bold)=="boolean","Graisse invalide")
-        for _,key in ipairs({"w","h","radius","size"}) do if l[key]~=nil then assert(l[key]>0,"Taille de calque négative ou nulle") end end
-        assert(l.w==nil or l.w<=1,"Largeur de calque hors écran")
-        assert(l.h==nil or l.h<=1,"Hauteur de calque hors écran")
-        assert(l.radius==nil or l.radius<=0.5,"Rayon trop grand")
-        assert(l.size==nil or l.size<=300,"Taille de police du paquet trop grande")
+        assert(l.text==nil or type(l.text)=="string" and #l.text<=256,"Invalid text")
+        assert(l.align==nil or l.align=="left" or l.align=="center" or l.align=="right","Invalid alignment")
+        assert(l.grey==nil or finite(l.grey,0,255),"Invalid colour")
+        assert(l.bold==nil or type(l.bold)=="boolean","Invalid weight")
+        for _,key in ipairs({"w","h","radius","size"}) do if l[key]~=nil then assert(l[key]>0,"Layer size negative or zero") end end
+        assert(l.w==nil or l.w<=1,"Layer width off screen")
+        assert(l.h==nil or l.h<=1,"Layer height off screen")
+        assert(l.radius==nil or l.radius<=0.5,"Radius too large")
+        assert(l.size==nil or l.size<=300,"Package font size too large")
         if l.type=="image" then
             local x,y,w,h=l.x or 0,l.y or 0,l.w or 1,l.h or 1
-            assert(x>=0 and y>=0 and x+w<=1 and y+h<=1,"Texture hors limites du viewport")
+            assert(x>=0 and y>=0 and x+w<=1 and y+h<=1,"Texture outside the viewport")
         end
-        assert(l.font==nil or l.font=="cfont" or l.font=="tfont" or l.font=="ffont","Police de paquet inconnue")
+        assert(l.font==nil or l.font=="cfont" or l.font=="tfont" or l.font=="ffont","Unknown package font")
     end
     return m
 end
 local function pngPixels(b)
-    assert(b:sub(1,8)=="\137PNG\13\10\26\10" and b:sub(13,16)=="IHDR","PNG invalide")
-    local function be(i)local a,c,d,e=b:byte(i,i+3);assert(e,"PNG tronqué");return ((a*256+c)*256+d)*256+e end
+    assert(b:sub(1,8)=="\137PNG\13\10\26\10" and b:sub(13,16)=="IHDR","Invalid PNG")
+    local function be(i)local a,c,d,e=b:byte(i,i+3);assert(e,"Truncated PNG");return ((a*256+c)*256+d)*256+e end
     local w,h=be(17),be(21)
-    assert(w>0 and h>0 and w*h<=4000000,"Texture trop grande")
+    assert(w>0 and h>0 and w*h<=4000000,"Texture too large")
     return w*h
 end
 function R.open(path,cache_root)
-    local bytes=assert(U.read(path,16*1024*1024),"Paquet absent ou trop volumineux")
+    local bytes=assert(U.read(path,16*1024*1024),"Package missing or too large")
     local entries=ZIP.inspect(bytes)
     local Archive=require("ffi/archiver")
     local a=Archive.Reader:new()
-    assert(a:open(path),"Impossible d'ouvrir le ZIP")
+    assert(a:open(path),"Cannot open the ZIP")
     local ok,result=pcall(function()
         local seen={}
         for entry in a:iterate() do
-            assert(entries[entry.path] and entry.mode=="file" and tonumber(entry.size)==entries[entry.path].size,"Entrée ZIP non conforme")
-            assert(not seen[entry.path],"Entrée ZIP dupliquée");seen[entry.path]=true
+            assert(entries[entry.path] and entry.mode=="file" and tonumber(entry.size)==entries[entry.path].size,"Non-conforming ZIP entry")
+            assert(not seen[entry.path],"Duplicate ZIP entry");seen[entry.path]=true
         end
-        assert(not a.err,"Lecture ZIP interrompue")
-        for name in pairs(entries) do assert(seen[name],"Entrée ZIP manquante") end
-        local data=assert(a:extractToMemory("manifest.json"),"Manifeste illisible")
+        assert(not a.err,"ZIP reading interrupted")
+        for name in pairs(entries) do assert(seen[name],"Missing ZIP entry") end
+        local data=assert(a:extractToMemory("manifest.json"),"Unreadable manifest")
         depth(data);local m=R.validate(require("json").decode(data),entries)
         local payload={};local total=0
         for name,entry in pairs(entries) do
             if name:match("%.png$") then
-                local b=assert(a:extractToMemory(name),"Texture illisible")
-                assert(#b==entry.size,"Texture tronquée");total=total+pngPixels(b)
-                assert(total<=12000000,"Budget de pixels dépassé");payload[name]=b
-            elseif name~="manifest.json" and not name:match("%.txt$") then error("Ressource non autorisée : "..name) end
+                local b=assert(a:extractToMemory(name),"Unreadable texture")
+                assert(#b==entry.size,"Truncated texture");total=total+pngPixels(b)
+                assert(total<=12000000,"Pixel budget exceeded");payload[name]=b
+            elseif name~="manifest.json" and not name:match("%.txt$") then error("Resource not allowed: "..name) end
         end
-        assert(payload[m.preview],"Aperçu PNG absent")
+        assert(payload[m.preview],"Missing PNG preview")
         -- Cache identity is an implementation detail, never an authenticity claim.
         local hash=5381;for i=1,#bytes do hash=(hash*33+bytes:byte(i))%2147483647 end
         local dest=cache_root.."/"..m.id.."-"..hash

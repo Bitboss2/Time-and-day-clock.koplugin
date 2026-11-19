@@ -28,8 +28,8 @@ function Studio:input(title,value,callback)
         dialog=Dialog:new{
             title=title,input=tostring(value or ""),
             buttons={{
-                {text="Annuler",id="close",callback=function()done()end},
-                {text="Valider",is_enter_default=true,callback=function()
+                {text="Cancel",id="close",callback=function()done()end},
+                {text="OK",is_enter_default=true,callback=function()
                     local v=dialog:getInputText();done();callback(v)
                 end},
             }},
@@ -41,12 +41,12 @@ function Studio:input(title,value,callback)
     else show()end
 end
 function Studio:confirm(title,callback,ok_text)
-    self:confirmSheet(title,"",ok_text or "Activer",callback)
+    self:confirmSheet(title,"",ok_text or "Enable",callback)
 end
 function Studio:apply()
     local before=U.copy(self.app.settings.data)
     local ok,e=self.app.settings:save(self.draft)
-    self.status=ok and "Réglages enregistrés" or tostring(e)
+    self.status=ok and "Settings saved" or tostring(e)
     if ok then
         self.draft=U.copy(self.app.settings.data);self:clearDirty();self.app.image_lists={};self.app.valid_images={}
         self:layout()
@@ -67,7 +67,7 @@ function Studio:leave()
         self.display:close(function()self.app.ui:close(self,"full")end)
     end
     if self.dirty then
-        self:confirmSheet("Abandonner le brouillon ?","Les modifications non appliquées seront perdues.","Abandonner",close,true)
+        self:confirmSheet("Discard the draft?","Changes that were not applied will be lost.","Discard",close,true)
     else close()end
 end
 function Studio:free() self:onCloseWidget() end

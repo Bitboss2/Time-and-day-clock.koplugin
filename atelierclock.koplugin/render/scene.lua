@@ -72,8 +72,8 @@ function Scene:render(now)
                     elseif side[key]~=nil then self.s[key]=side[key] end
                 end
                 local valid,result=pcall(load("core/settings").validate,self.s)
-                if valid then self.s=result else self.s=U.copy(self.input_settings);self.app.notice="Réglages par image invalides." end
-            else self.app.notice="JSON par image illisible." end
+                if valid then self.s=result else self.s=U.copy(self.input_settings);self.app.notice="Invalid per-image settings." end
+            else self.app.notice="Unreadable per-image JSON." end
         end
         self.full=true
     end
@@ -201,7 +201,7 @@ function Scene:render(now)
         end
     end
     if s.interval~=60 or self.app.paused_warning then
-        local note=self.app.paused_warning or (s.interval==0 and "HEURE À LA MISE EN VEILLE" or "≈  ACTUALISATION / "..math.floor(s.interval/60).." MIN")
+        local note=Time.note(self.app.paused_warning,s)
         local rect=D.text(b,note,self.w*.5,self.h*.965,math.max(11*ratio,15*legible),self.ink,"center",self.w*.88,"cfont")
         fresh.pause_note={rect=rect,key=note}
         if not self.old.pause_note or self.old.pause_note.key~=note then dirty=D.union(dirty,rect) end

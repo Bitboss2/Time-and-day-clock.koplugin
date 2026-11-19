@@ -33,7 +33,7 @@
     "hardware_tested": false
   },
   "preinstalled_clocks": 10,
-  "tests": 168,
+  "tests": 169,
   "native_rtc_simulated_minutes": 90,
   "tested_dpi": [
     167,
@@ -141,15 +141,15 @@
     "source": "user photographs, no control baseline"
   },
   "clock_sha256": {
-    "duplex.clock": "ba8653988e9845365a36e680c0cf17ff8497b54e3bd091e4f4013462b136f1a5",
-    "halo.clock": "57b0883639c4e21565a4d6c574a1bd12f6899d83a3a0a7ada5cd4959054969ad",
-    "index.clock": "f2097ec7e20ce41c73bbaf4dd551bd09ddd17b319cd1e7974589a4c7213fdd27",
-    "journal.clock": "5d6c50f02972790c4b30d4914a338fd94b13a5580c10b1e5d1e9e5a1d0b162b4",
-    "lisiere.clock": "4c257e6af5600f7cfdb2663dcdc68e34a97ef8b982e53df8738fab2228eb65d3",
-    "mosaique.clock": "45c3833b1b9ea58526ea70d401dbf881bb1657fea7056508c0649f101887db38",
-    "octant.clock": "277870f1473f9895d4daa7e3583dfed329a734cbe7af07e8057dc30d69175493",
-    "signal.clock": "74e873f3bba68ca73050bcb56628e07dc4eb27c4b05e7d03c89f85da2402c4e4",
-    "totem.clock": "61a3c88bd052dcc588828714194245e60cce9cfaa1d51e6d00a5ee0a1fc16bd6",
-    "typo.clock": "42d1077bd3ddf858dd0e59d999cdf8c316bf597a25f0655f59be023a057de8cb"
+    "duplex.clock": "a4aafbb60e5de560abde0939801d3ce4bd10dd3f056b0f4fffde6d3dc4c74f77",
+    "halo.clock": "38a4cfd2095c6b1a9d9bae5476dbc0db96a6bd439b9aea31f96f46947851bb6e",
+    "index.clock": "fb4c8a041e145d63342cfbd78eb516ead44efba0cdd2b9298826f249081876bb",
+    "journal.clock": "2a3dc4d3557d9d18cdf63c2bdab6497dce463102dbf6439b63dbb1ec4ab6ac8e",
+    "lisiere.clock": "e1436654531a4ddacd392a3787599af47843045073159181779c19e2c48d3cd4",
+    "mosaique.clock": "b8f2fa3bd990fb0ccfb728213b2c435c356befc46a6b126981de11ab79a90ecf",
+    "octant.clock": "403d2dae1f4e074a4fd89de1cb2ad0de8b40ed087895dce849308ce12cec8303",
+    "signal.clock": "cdae6d12f1cce59e3e51a982cfc6472d20d56e9a652af2c2dca1513ad3f8bfdb",
+    "totem.clock": "174680a0182fc0270b975eec6ddb4ba32b9c8ab217b91ab4350f8fafb64c276f",
+    "typo.clock": "af763d6b096bf3988edcb64e736848be0436756746589d11c841db41e1c0f093"
   }
 }

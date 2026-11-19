@@ -16,11 +16,11 @@ local function change(mgr,fn)
     local first=(mgr._task_queue or {})[1]
     if first then
         if epoch==first.epoch then
-            if not result then return nil,"le pilote RTC a refusé l'alarme"end
+            if not result then return nil,"the RTC driver refused the alarm"end
         elseif not old or old.epoch~=first.epoch then
             -- Compatibility with managers which bypass setWakeupAlarm.
             local ok,value=pcall(mgr.setWakeupAlarm,mgr,first.epoch)
-            if not ok or not value then return nil,"le pilote RTC a refusé l'alarme"end
+            if not ok or not value then return nil,"the RTC driver refused the alarm"end
         end
     end
     return true

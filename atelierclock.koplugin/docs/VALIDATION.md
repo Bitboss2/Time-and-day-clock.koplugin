@@ -101,8 +101,8 @@ Le lecteur de journal utilise `klogctl(3)`, lecture seule et bornée à 16 Kio. 
 
 ## 0.3.0 — interface 30 Hz, Fluid Ink, RTC multi-liseuses
 
-- 168 tests passent, dont 12 nouveaux :
+- 169 tests passent, dont 13 nouveaux :
   - `test_fluid_ui.py`, 8 tests : profils, mouvement, démarrage Impulsions 2 / Débit sans rafraîchissement KOReader, carrousel et feuille, libération et reprise pour la saisie, veille et réveil, impulsions refusées, chien de garde, animations réduites ;
-  - `test_rtc_devices.py`, 4 tests : sept Kobo, chaîne `dodgy_rtc`, trois Kindle via powerd et mockrtc, Kindle sans écran de veille KOReader.
+  - `test_rtc_devices.py`, 5 tests : sept Kobo, chaîne `dodgy_rtc`, trois Kindle via powerd et mockrtc, Kindle sans écran de veille KOReader, profil 10 minutes complet.
 - Le moteur natif est **simulé** dans les tests. Ni la cadence optique, ni les traces, ni le coût CPU réel de l'atelier à 30 Hz sur Cortex-A9, ni le réveil Kindle n'ont été mesurés sur appareil.
 - Les captures et les GIF de `docs/media` sont des images réellement composées par le plugin, avec des polices de substitution. Ce ne sont pas des photos de dalle.

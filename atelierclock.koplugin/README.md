@@ -1,119 +1,189 @@
 # Atelier Clock
 
-**0.3.0 « Fluide » — 19 novembre 2026.** Dix cadrans `.clock`, collection, éditeur de complications et un atelier plein écran animé, pensé pour le moteur **Fluid Ink 6.5**.
+**0.3.0 "Fluid", 19 November 2026.** Ten `.clock` faces, a collection, a complication editor, and an animated full-screen studio built for the **Fluid Ink 6.5** engine.
 
-## Affichage fluide
+## Fluid display
 
-L'atelier compose ses images en niveaux de gris 8 bits à partir de couches gardées en mémoire, puis les transmet au moteur Fluid Ink embarqué (`engine/fluidink`) :
+The studio composes its frames in 8-bit greyscale from layers kept in memory, then hands them to the built-in Fluid Ink engine (`engine/fluidink`):
 
-- **Kobo Aura Edition 2 v1** : Fluid Ink v6, **Impulsions 2**, profil **Débit** (file 1, Bayer 8×8, sans gamma), 30 ips ciblées. Le profil à impulsions a besoin de **votre** copie `factory-reference.bin`, à placer dans `engine/fluidink/` ; elle n'est pas redistribuée. Sans elle, ou si le noyau refuse les impulsions, le plugin bascule en v6 sans impulsions.
-- **Autres liseuses compatibles avec Fluid Ink** (Aura 2 v2, Aura H2O 2, Glo HD, Aura One, Clara HD, Kindle PW2/PW3/Voyage) : Fluid Ink v6 sans impulsions, A2 en mouvement et DU au repos.
-- **Partout ailleurs**, ou si la vérification du moteur échoue : affichage classique de KOReader, avec les mêmes écrans et les animations remplacées par leur état final.
+- **Kobo Aura Edition 2 v1**: Fluid Ink v6, **Pulses 2**, **Throughput** profile (queue 1, Bayer 8×8, no gamma), 30 fps target. In Fluid Ink's own French labels these are *Impulsions 2* and *Débit*.
+  - The pulse profile needs **your own** copy of `factory-reference.bin` in `engine/fluidink/`. It is not redistributed.
+  - Without it, or if the kernel refuses the pulses, the plugin switches to v6 without pulses.
+- **Other Fluid Ink-compatible readers** (Aura 2 v2, Aura H2O 2, Glo HD, Aura One, Clara HD, Kindle PW2/PW3/Voyage): Fluid Ink v6 without pulses, A2 while moving and DU at rest.
+- **Everywhere else**, or when the engine check fails: classic KOReader refresh, with the same screens and each animation replaced by its final state.
 
-Le moteur est vérifié en mémoire dans un processus séparé avant toute utilisation. Il reste le seul à écrire sur l'écran pendant l'atelier :
+The engine is checked in RAM in a separate process before any use. While the studio is open, it is the only thing writing to the panel:
 
-- Pour une saisie de texte, il s'arrête, restaure la table d'origine, puis reprend. Le premier affichage après la reprise peut flasher (GC16).
-- Avant chaque veille, il s'arrête de façon synchrone. L'horloge de veille n'utilise jamais Fluid Ink.
-- En paysage ou en mode nuit, l'atelier reste en affichage classique.
+- For text entry, it stops, restores the original waveform table, then resumes. The first frame after resuming may flash (GC16).
+- Before every sleep, it stops synchronously. The sleep-screen clock never uses Fluid Ink.
+- In landscape or night mode, the studio stays on the classic display.
 
-**Diagnostic → Affichage** montre le moteur actif, son profil et les cibles et scans par seconde. On y règle aussi le moteur (Automatique, Fluide, Classique), la cadence (30, 45, 60 Hz), le nettoyage au repos et les animations (complètes ou réduites), et on peut nettoyer l'écran ou réessayer le moteur. Les compteurs ne mesurent pas la cadence optique : celle-ci se vérifie à la caméra sur la dalle.
+**Diagnostics → Display** shows the active engine, its profile and live targets and scans per second. It also holds the engine settings:
 
-## Réveil selon la liseuse
-
-- **Kobo** : RTC matériel par `WakeupMgr`, suspension gérée par KOReader. C'est le cas des sept modèles compatibles avec Fluid Ink.
-- **Kindle** Paperwhite 2/3 et Voyage : `WakeupMgr` avec `mockrtc`, via powerd. Il faut que KOReader gère l'écran de veille. powerd suspend lui-même la liseuse ; un garde rattrape la minute si la liseuse est restée éveillée ou si une alarme passée a été supprimée. La précision est d'environ 15 s, et 5 minutes sont conseillées.
-- **Sans réveil programmable** : l'horloge est figée à l'endormissement, avec un message.
-
-## Activer le profil Aura 2
-
-Après mise à jour, ouvrir **Veille → Optimiser pour Aura 2 → Appliquer**. Ce bouton active le traitement rapide du réveil propre à l’horloge, la réutilisation conditionnelle de la préparation de suspension et une marge après affichage de 0,1 seconde. Il ne modifie pas l’intervalle choisi : conserver **1 minute**. Il ne modifie pas non plus la pause nocturne ou le nettoyage configuré.
-
-La réutilisation exige une API native compatible, un sommeil précédent validé, une attente écran fiable, le Wi-Fi éteint, l’absence de charge et le drapeau noyau `state-extended` encore à 1. Elle est revalidée au moment de s’exécuter. Le mode RTC minute confirmé utilise à la place la veille native `standby` avec son drapeau zéro ; les autres cas conservent la préparation native complète. L’option se désactive dans les autres réglages d’énergie.
-
-Un retour trop court désactive la réutilisation de la préparation profonde. Sur le modèle FP9928 confirmé, la veille RTC minute peut prendre le relais ; un échec de ce mode conserve le repli natif pour la session. Les autres alarmes restent dans la file native. Le réveil utilisateur annule la demande différée. Aucun gouverneur CPU, noyau, pilote ou état sysfs n’est modifié directement par le plugin.
-
-## Installation ou mise à jour
-
-1. Quitter complètement KOReader.
-2. **Remplacer le dossier entier** `atelierclock.koplugin` dans le dossier `plugins` de KOReader par celui de ce ZIP. Éviter de fusionner les dossiers : cela conserverait les dix anciens cadrans. Sur de nombreuses Kobo, le chemin est `.adds/koreader/plugins/atelierclock.koplugin`.
-3. **Conserver `settings/atelierclock`**, qui contient les préférences et les imports personnels. Les réglages RTC, de nettoyage, d’orientation et de taille de l’interface sont conservés.
-4. Éjecter la Kobo, relancer KOReader et ouvrir **Outils → Plus d’outils → Atelier Clock**. Activer l’extension dans la gestion des plugins si nécessaire.
-5. Dans **Veille**, activer l’horloge. L’option **Horloge Atelier** est aussi présente dans le menu natif d’écran de veille KOReader, dans le lecteur et dans le navigateur de fichiers.
-
-Au premier lancement de la nouvelle collection, le cadran actuellement disponible est ajouté à « Mes cadrans ». Si l’ancien modèle a été retiré de la collection fournie, **Totem** prend sa place. Les anciens paramètres ne sont pas effacés ; les déplacements libres, polices personnalisées et fonds par image concernent les imports `.clock` v1. Les nouvelles compositions v2 utilisent leurs styles et emplacements propres.
-
-## Parcourir et personnaliser
-
-- **Cadrans → Mes cadrans** : un carrousel à faire glisser du doigt ; il garde l'élan puis s'accroche à un cadran, et les voisins dépassent sur les bords. Parcourir ne change pas l'horloge active. **Utiliser** sélectionne et enregistre. **▶** lance l'essai plein écran, avec un zoom depuis l'aperçu.
-- **⋯** (ou un appui long sur la carte) ouvre une feuille : **Dupliquer**, **Renommer**, **Afficher en plein écran**, **Retirer**. On peut avoir jusqu'à 24 variantes ; retirer une variante conserve son modèle dans le catalogue.
-- **Catalogue** : les dix modèles et vos imports. **Ajouter** crée une variante personnelle et ouvre l'éditeur. **Importer** accepte le chemin complet d'un `.clock`.
-- **Modifier → Style** : Plein, Fin ou Contour selon le cadran, et apparence Papier, Encre ou Auto.
-- **Modifier → Modules** : toucher un cadre **+**. Une feuille monte avec le rendu réel de chaque complication compatible ; le contenu choisi rejoint son emplacement.
-- **Modifier → Options** : nommer la variante, exporter un `.clock`, choisir l'orientation, le format horaire, la langue, le format de date et la taille de l'interface.
-
-Les modifications restent dans un **brouillon**. La barre *Brouillon · Annuler · Appliquer* n'apparaît que lorsqu'il y a quelque chose à appliquer, et fermer l'atelier avec un brouillon demande confirmation. Les listes défilent avec de l'inertie et un bord élastique ; un balayage horizontal change d'onglet, ou de mode dans Modifier. L'éditeur libre reste disponible pour les imports v1 : faire glisser les éléments sur l'aperçu, puis passer par les six sections de réglages.
-
-Les aperçus reflètent l'heure au moment du dessin. L'interface tient compte du DPI, se réorganise en paysage et sur les écrans compacts, et peut être agrandie.
-
-## Les dix modèles inclus
-
-| Fichier | Composition originale |
+| Setting | Values |
 |---|---|
-| `totem.clock` | Deux étages de chiffres monumentaux ; date et anneau de batterie. |
-| `duplex.clock` | Deux panneaux contrastés et deux complications rectangulaires. |
-| `index.clock` | Règle de 24 heures, heure décentrée, deux cartouches. |
-| `halo.clock` | Aiguilles et graduations fines, deux anneaux personnalisables. |
-| `journal.clock` | Grande heure et vrai calendrier mensuel, jour courant encadré. |
-| `lisiere.clock` | Paysage à l’encre, heure sobre et sceau circulaire. |
-| `mosaique.clock` | Un grand module et deux petits autour de l’heure. |
-| `octant.clock` | Médaillon de l’heure courante et arc des minutes. |
-| `typo.clock` | Le temps écrit en mots, composition littéraire. |
-| `signal.clock` | Afficheur géométrique à sept segments, sans animation. |
+| Display engine | Automatic, Fluid or Classic |
+| Target frame rate | 30, 45 or 60 Hz |
+| Clean at rest | On or off |
+| Animations | Full or Reduced |
 
-Chaque modèle possède une vraie disposition portrait **et une autre disposition paysage**. Les dix `.clock` sont des ZIP DEFLATE avec JSON, textures PNG originales et aperçu produit par le moteur Lua. Aucune heure n’est gravée dans les textures.
+From the same section you can clean the screen or retry the engine. The counters do not measure optical cadence; check that with a camera on the panel.
 
-## Complications hors ligne
+## Wake-up by reader
 
-Les sept contenus disponibles sont : **Vide**, **Date**, **Batterie**, **Journée**, **Semaine**, **Autre fuseau** et **Lecture**. Les familles sont ligne, anneau et rectangle. Leur rendu s’adapte à la place prévue.
+| Reader | How it wakes | Notes |
+|---|---|---|
+| **Kobo**: the seven Fluid Ink-compatible models | Hardware RTC through `WakeupMgr` | Suspend handled by KOReader. |
+| **Kindle** Paperwhite 2/3 and Voyage | `WakeupMgr` with `mockrtc`, through powerd | KOReader must own the sleep screen. powerd suspends the reader itself. A guard catches the minute if the reader stayed awake, or if a past alarm was dropped. About 15 s precision, so 5 minutes is recommended. |
+| **No programmable wake-up** | None | The clock freezes when the reader sleeps, and says so. |
 
-- Le calendrier se calcule localement et prend en compte les longueurs de mois et les années bissextiles.
-- Journée est une progression indicative par quarts d’heure ; la règle Index évolue toutes les cinq minutes. L’heure principale continue à suivre le profil RTC choisi.
-- Les fuseaux embarqués sont UTC, Paris, Londres, New York et Tokyo, avec transitions IANA 1970–2100. Pour changer de ville, rouvrir le module de seconde horloge puis toucher le bouton du fuseau en bas du sélecteur.
-- Lecture affiche le titre et le pourcentage enregistrés par KOReader au début de la scène. Cette photographie de lecture ne crée aucune tâche ni lecture de métadonnées à chaque minute. Si elle est indisponible, le module affiche un tiret et une indication explicite.
-- Une charge de batterie inconnue reste indiquée comme inconnue.
+## Enabling the Aura 2 profile
 
-Aucune météo fictive, connexion réseau ou tâche de synchronisation n’est créée pour ces modules.
+After updating, open **Sleep → Optimise for Aura 2 → Apply**. The button turns on:
 
-## Importer et exporter
+- fast handling of the clock's own wake-ups;
+- conditional reuse of the suspend preparation;
+- a 0.1 s margin after the display finishes.
 
-Dans le catalogue, **Importer** accepte le chemin complet d’un fichier. Les v1 restent lisibles ; les nouveaux exports sont en v2. Un identifiant de modèle déjà présent est refusé ; pour créer plusieurs versions visuelles du même modèle, utiliser **Dupliquer**.
+It does not change your refresh profile (keep **1 minute**), the night pause or the configured full refresh.
 
-Depuis **Modifier → Options → Exporter en .clock**, choisir un nouveau chemin. L’export contient la composition, les textures, un aperçu de la variante et son préréglage de style/complications. Il est validé avant publication et peut être réimporté, avec un nouvel identifiant. Il n’écrase pas un fichier existant. Le chemin proposé est `settings/atelierclock/exports/…`. Les exports de cadrans ne contiennent pas les réglages RTC personnels.
+Reuse requires a compatible native API, a validated previous sleep, a reliable screen wait, Wi-Fi off, no charging, and the `state-extended` kernel flag still at 1. These conditions are checked again at the moment of reuse.
 
-Un profil de tous les réglages reste importable/exportable via **Diagnostic → Outils → Profil** : chemin JSON existant pour importer, nouveau chemin pour exporter. L’import d’anciens fichiers Lua analyse uniquement les tables littérales et n’exécute aucun code.
+When the minute RTC mode is confirmed, native `standby` with its zero flag is used instead. In every other case, the full native preparation runs. The option can be turned off in the other power settings.
 
-## Rendu et énergie
+A too short return disables reuse of the deep preparation. On a confirmed FP9928 model, minute RTC standby can take over; if that mode fails, the native fallback is kept for the session. Other alarms stay in the native queue, and a user wake-up cancels the deferred request. The plugin never changes the CPU governor, kernel, drivers or sysfs state directly.
 
-Le moteur v2 garde le fond et les éléments déjà dessinés en mémoire. Date, calendrier, décor et progression de lecture ne sont pas recalculés à chaque minute. Les heures et minutes sont séparées dans Totem, Duplex et Signal. Les graduations analogiques sont mises en cache ; les nouveaux et anciens tracés d’aiguilles sont inclus dans la zone à effacer.
+## Installing or updating
 
-Les fenêtres de rafraîchissement disjointes restent séparées jusqu’à quatre fenêtres ; au-delà, le plugin demande une fenêtre englobante. Pour les chiffres et les aiguilles ordinaires, les fenêtres sont resserrées sur les anciens et nouveaux tracés. Les nettoyages complets configurés et les protections KOReader sont conservés. Les rafraîchissements réguliers de veille utilisent le mode `ui` : ils ne consomment plus le compteur de pages du lecteur, qui pouvait provoquer des nettoyages supplémentaires indépendants du réglage du cadran. La mesure de batterie nécessaire au seuil d’arrêt est réutilisée par les complications durant le même réveil.
+1. Quit KOReader completely.
+2. **Replace the whole** `atelierclock.koplugin` folder in KOReader's `plugins` folder with the one from this archive. Do not merge folders: that would keep the old faces. On many Kobos the path is `.adds/koreader/plugins/atelierclock.koplugin`.
+3. **Keep `settings/atelierclock`**: it holds your preferences and imported faces. RTC, full refresh, orientation and interface size settings are kept.
+4. Eject the reader, restart KOReader and open **Tools → More tools → Atelier Clock**. Enable the plugin in the plugin manager if needed.
+5. In **Sleep**, turn the clock on. The **Atelier clock** option is also in KOReader's own sleep screen menu, in both the reader and the file browser.
 
-La séquence simulée de 60 minutes à 758×1024 a été recalculée avec le scan adaptatif. **Les fenêtres demandées ne sont pas une mesure d’économie de batterie.** Les peintures initiales et nettoyages complets sont exclus de ce comparatif et restent actifs. KOReader et le contrôleur peuvent aligner ou promouvoir les rafraîchissements. Les chiffres complets et les limites sont dans `docs/RENDER_MEASUREMENTS.json`.
+On the first launch of the collection, the currently available face is added to "My faces". If your old model is no longer bundled, **Totem** takes its place. Old settings are not erased.
 
-À une minute, le nombre d’alarmes reste identique. La première suspension conserve sa préparation native complète. Après un réveil propre à l’horloge, la bêta 4 peut éviter sa répétition : elle appelle la phase native `_doSuspend` après avoir attendu la fin du rafraîchissement, uniquement si le drapeau de préparation est encore actif. La synchronisation disque native, la suspension `mem` et la gestion des erreurs restent exécutées. On ne peut donc pas promettre quelques points de batterie par semaine à partir de ces seules optimisations graphiques.
+Free placement, custom fonts and per-image backgrounds apply to imported `.clock` v1 faces. v2 compositions use their own styles and slots.
 
-**Veille** conserve les profils 1 minute, 5 minutes, 15 minutes et statique, avec mention visible lorsque l’heure est approximative ou figée. La pause nocturne suspend les actualisations jusqu’à l’heure de reprise. Ces compromis ne sont jamais activés silencieusement. Le seuil de batterie arrête les réveils pour la session.
+## Browsing and customising
 
-L’option de réveil prioritaire/RTC accéléré reste limitée aux Aura 2 reconnues (`Kobo_star`, `Kobo_star_r2`) et désactivée par défaut sur une installation neuve. Une préférence existante est conservée. Elle utilise le contrôle natif KOReader à 0,2 seconde après une échéance propre au plugin ; les autres alarmes, délais de grâce et protections de suspension restent respectés. Sans accélération, le garde natif peut attendre environ 15 secondes.
+| Screen | What you can do |
+|---|---|
+| **Faces → My faces** | A carousel you drag with your finger; it keeps its momentum, then snaps to a face, with neighbours peeking in from the sides. Browsing never changes the active clock. **Use** selects and saves. **▶** runs the full-screen trial, zooming in from the preview. |
+| **⋯** (or a long press on the card) | Opens a sheet: **Duplicate**, **Rename**, **Show full screen**, **Remove from my faces**. You can have up to 24 variants; removing one keeps its model in the catalogue. |
+| **Catalogue** | The ten models and your imports. **Add** creates a personal variant and opens the editor. **Import** takes the full path of a `.clock` file. |
+| **Edit → Style** | Bold, Thin or Outline depending on the face, and Paper, Ink or Auto appearance. |
+| **Edit → Modules** | Tap a **+** frame. A sheet rises with each compatible complication rendered for real; the content you choose flies to its slot. |
+| **Edit → Options** | Name the variant, export a `.clock`, choose orientation, time format, clock language, date format and interface size. |
 
-## Vérifier sur la Kobo
+Changes stay in a **draft**:
 
-**Diagnostic → Outils → Détails techniques** indique maintenant le sommeil cumulé, sa proportion dans la session, le délai entre réveil et nouvelle demande de sommeil, les préparations réutilisées, le motif d’un retour au mode natif et notamment le temps CPU du rendu, la surface de rafraîchissement demandée, le délai d’alarme, les rattrapages et l’évolution de la charge pendant la dernière session. Le temps CPU du dessin n’est pas la durée totale d’éveil. **Suspension précédente** est maintenant décodée via `ui/time` : les `2787663 s` de la bêta 3 représentaient en réalité **2,787663 secondes**. La conversion est également appliquée au seuil de validation de sommeil, pour ne plus confondre une suspension de quelques microsecondes avec une seconde. Les chiffres de charge sont des points de la jauge, pas une mesure électrique calibrée.
+- The *Draft · Cancel · Apply* bar appears only when there is something to apply.
+- Closing the studio with a draft asks for confirmation.
 
-Pour une comparaison utile avec l’essai précédent, garder le même intervalle, l’option RTC et l’éclairage, commencer à charge comparable et relever les heures de début/fin. Un essai avec **Halo** est intéressant pour son petit rectangle d’aiguilles ; vérifier aussi l’absence de traces résiduelles après plusieurs heures. Le cumul est figé à la sortie de la session, pour que le temps passé à consulter le diagnostic ne soit pas ajouté à l’éveil de cette session. Le rapport JSON contient également les capacités détectées, la version du noyau et les 120 derniers échantillons de sommeil, conservés en RAM. L’export manuel écrit `settings/atelierclock/diagnostic.json` ; la fin normale de session écrit une fois `settings/atelierclock/last-session.json`.
+Lists scroll with momentum and an elastic edge. A horizontal swipe changes tab, or mode inside Edit.
 
-L’horloge manuelle se ferme au toucher ; l’appui long ouvre l’atelier. Elle ne bloque pas l’auto-suspension. Pendant la vraie veille Kobo, utiliser le bouton ou la sleepcover : le tactile n’est pas nécessairement alimenté. Les écrans d’extinction et de redémarrage restent gérés par KOReader.
+The free editor remains available for v1 imports: drag elements on the preview, then go through the six settings sections.
 
-Pour retirer le plugin, désactiver d’abord l’horloge dans **Veille**, quitter KOReader puis supprimer son dossier. Si le dossier est déjà supprimé, sélectionner un écran de veille standard dans KOReader.
+Previews show the time at the moment they are drawn. The interface takes the DPI into account, reflows for landscape and compact screens, and can be enlarged.
 
-Format et limites : `docs/CLOCK_FORMAT.md`. Tests et limites matérielles : `docs/VALIDATION.md`. Références de conception : `docs/DESIGN_RESEARCH.md`.
+## The ten bundled faces
+
+| File | Original composition |
+|---|---|
+| `totem.clock` | Two tiers of monumental digits; date and battery ring. |
+| `duplex.clock` | Two contrasting panels and two rectangular complications. |
+| `index.clock` | 24-hour ruler, off-centre time, two cartouches. |
+| `halo.clock` | Fine hands and ticks, two customisable rings. |
+| `journal.clock` | Large time and a real monthly calendar, today framed. |
+| `lisiere.clock` | Ink landscape, understated time and a round seal. |
+| `mosaique.clock` | One large and two small modules around the time. |
+| `octant.clock` | Current-hour medallion and a minute arc. |
+| `typo.clock` | Time written in words, a literary composition. |
+| `signal.clock` | Geometric seven-segment display, without animation. |
+
+Each model has a real portrait layout **and a separate landscape layout**. The ten `.clock` files are DEFLATE ZIPs with JSON, original PNG textures and a preview rendered by the Lua engine. No time is baked into the textures.
+
+Text on the faces (dates, words, complication titles, status notes) follows the **Clock language** option: English by default, or French.
+
+## Offline complications
+
+The seven available contents are **Empty**, **Date**, **Battery**, **Day**, **Week**, **World clock** and **Reading**. They come in three families (line, ring and rectangle) and adapt to the space they are given.
+
+- The calendar is computed locally, with month lengths and leap years.
+- Day is an indicative progress bar updated every quarter of an hour; the Index ruler moves every five minutes. The main time keeps following the chosen RTC profile.
+- The bundled time zones are UTC, Paris, London, New York and Tokyo, with IANA transitions 1970–2100. To change city, reopen the world clock module and tap the time zone button at the bottom of the sheet.
+- Reading shows the title and percentage KOReader recorded when the scene started. This reading snapshot creates no task and no metadata read every minute. When it is unavailable, the module shows a dash and an explicit hint.
+- An unknown battery level stays shown as unknown.
+
+No fake weather, network connection or sync task is created for these modules.
+
+## Importing and exporting
+
+| Action | Where | Notes |
+|---|---|---|
+| Import a face | **Catalogue → Import** | Takes the full path of a file. v1 files remain readable. A model identifier that is already installed is refused; to make several visual versions of the same model, use **Duplicate**. |
+| Export a face | **Edit → Options → Export as .clock** | Choose a new path; the suggested one is `settings/atelierclock/exports/…`. The export holds the composition, textures, a preview of the variant and its style and complication preset. It is validated before being written, can be imported again under a new identifier, and never overwrites an existing file. Personal RTC settings are not included. New exports are v2. |
+| Import or export a settings profile | **Diagnostics → Tools → Profile** | An existing JSON path imports, a new path exports. Importing old Lua files only parses literal tables and never executes code. |
+
+## Rendering and power
+
+The v2 engine keeps the background and already-drawn elements in memory. Date, calendar, decoration and reading progress are not recomputed every minute. Totem, Duplex and Signal draw hours and minutes separately. Analogue ticks are cached, and both old and new hand positions are included in the area to clear.
+
+**Refresh windows**
+
+- Disjoint windows stay separate up to four; beyond that, the plugin requests one bounding window.
+- For ordinary digits and hands, windows are tightened around the old and new strokes.
+- Configured full refreshes and KOReader's safeguards are kept.
+- Regular sleep refreshes use `ui` mode, so they no longer consume the reader's page counter, which could trigger extra full refreshes unrelated to the face setting.
+- The battery reading needed for the stop threshold is reused by the complications during the same wake-up.
+
+The simulated 60-minute sequence at 758×1024 was recomputed with the adaptive scan. **Requested windows are not a measure of battery savings.** Initial paints and full refreshes are excluded from that comparison and remain active. KOReader and the controller may align or promote refreshes. Full figures and limits are in `docs/RENDER_MEASUREMENTS.json`.
+
+**Suspend**
+
+- At one minute, the number of alarms is unchanged.
+- The first suspend keeps its full native preparation.
+- After a wake-up owned by the clock, the plugin can skip repeating it: it calls the native `_doSuspend` phase after the refresh has finished, and only if the preparation flag is still set.
+- Native disk sync, `mem` suspend and error handling still run.
+
+These graphical optimisations alone cannot promise a few battery points per week.
+
+**Refresh profiles and safeguards**
+
+- **Sleep** offers the 1, 5, 10 and 15-minute and static profiles. The clock shows a visible note when the time is approximate or frozen.
+- The night pause suspends updates until the resume hour. These trade-offs are never enabled silently.
+- The battery threshold stops wake-ups for the session.
+
+The priority wake-up / fast RTC option stays limited to recognised Aura 2 models (`Kobo_star`, `Kobo_star_r2`). It is off by default on a fresh installation, and an existing preference is kept. It uses KOReader's native check 0.2 s after a deadline owned by the plugin, while other alarms, grace periods and suspend safeguards are respected. Without it, the native guard can wait about 15 seconds.
+
+## Checking on the reader
+
+**Diagnostics → Tools → Technical details** shows, for the last session:
+
+- total sleep and its share of the session;
+- the delay between wake-up and the next sleep request;
+- reused preparations, and the reason for any return to native mode;
+- render CPU time (which is not the total awake time), requested refresh area, alarm delay and recoveries;
+- the battery level over the session;
+- the display engine and the RTC capability.
+
+**Previous suspend** is decoded through `ui/time`: the `2787663 s` of beta 3 were really **2.787663 seconds**. The same conversion applies to the sleep validation threshold, so a suspend of a few microseconds is no longer mistaken for a second. Battery figures are gauge points, not a calibrated electrical measurement.
+
+For a meaningful comparison with a previous trial:
+
+- keep the same interval, RTC option and frontlight;
+- start at a comparable charge and note the start and end times;
+- **Halo** is a good test thanks to its small hand rectangle; also check for residual ghosting after several hours.
+
+The total is frozen when the session ends, so time spent reading the diagnostics is not added to that session's awake time. The JSON report also holds the detected capabilities, the kernel version and the last 120 sleep samples kept in RAM. A manual export writes `settings/atelierclock/diagnostic.json`; a normal end of session writes `settings/atelierclock/last-session.json` once.
+
+The manual clock closes on a tap; a long press opens the studio. It does not block auto-suspend. During real Kobo sleep, use the power button or the sleep cover: touch is not necessarily powered. Power-off and restart screens stay under KOReader's control.
+
+To remove the plugin, first turn the clock off in **Sleep**, quit KOReader, then delete its folder. If the folder is already gone, choose a standard sleep screen in KOReader.
+
+## Further reading
+
+- Format and limits: `docs/CLOCK_FORMAT.md`.
+- Tests and hardware limits: `docs/VALIDATION.md` (French).
+- Design references: `docs/DESIGN_RESEARCH.md`.

@@ -1,103 +1,115 @@
 # Atelier Clock
 
-**Horloges de veille pour KOReader, avec un atelier plein écran pensé pour une liseuse qui ne rafraîchit plus à 2–3 Hz mais à 30 Hz.**
+**Sleep-screen clocks for KOReader, with a full-screen studio built for an e-reader that no longer refreshes at 2–3 Hz but at 30 Hz.**
 
-Version **0.3.0 « Fluide »** — 19 novembre 2026 · [Journal des changements](CHANGELOG.md) · [English summary](#english-summary)
+Version **0.3.0 "Fluid"**, 19 November 2026 · [Changelog](CHANGELOG.md) · [Feature checklist](docs/FEATURES.md)
 
-![Trois écrans d'Atelier Clock 0.3.0 : cadrans, modules, veille](docs/media/hero.png)
+![Three Atelier Clock 0.3.0 screens: faces, modules, sleep screen](docs/media/hero.png)
 
-Atelier Clock affiche une horloge pendant la veille de la liseuse, réveillée chaque minute par le RTC, et propose un atelier pour choisir, composer et régler dix cadrans. La version 0.3.0 refond toute l'interface autour du moteur **Fluid Ink v6.5**. Sur une **Kobo Aura Edition 2 v1**, le moteur vise **30 images par seconde** avec le profil **Impulsions 2** et le réglage **Débit**. Le défilement suit le doigt avec de l'inertie, les écrans glissent, les feuilles montent du bas et les interrupteurs basculent avec un petit rebond, comme sur un téléphone. Les autres liseuses compatibles avec Fluid Ink utilisent **Fluid Ink v6 sans impulsions**. Toutes les autres utilisent l'affichage classique de KOReader, avec exactement les mêmes écrans et fonctions, sans animation.
+Atelier Clock shows a clock while your e-reader sleeps. The RTC wakes the reader up on a schedule to refresh it. A studio lets you pick, compose and tune ten clock faces.
 
-## Voir l'interface bouger
+Version 0.3.0 rebuilds the whole interface around the **Fluid Ink v6.5** engine:
 
-Chaque image ci-dessous est une vraie image produite par le code du plugin, à 30 Hz, telle qu'elle serait transmise au moteur (outil `tools/build_screenshots.py`, polices DejaVu de substitution). Ce ne sont pas des vidéos de la dalle e-ink.
+- **Kobo Aura Edition 2 v1**: the engine targets **30 frames per second**, using the **Pulses 2** profile with the **Throughput** setting (*Impulsions 2* and *Débit* in Fluid Ink's own French labels).
+- **Other Fluid Ink-compatible readers**: **Fluid Ink v6 without pulses**.
+- **Every other device**: classic KOReader refresh, with exactly the same screens and features, minus the animation.
 
-| Carrousel inertiel | Onglets et compteurs |
+In the studio, scrolling follows your finger with momentum, screens slide, sheets rise from the bottom and switches flip with a small bounce, the way they do on a phone.
+
+## See it move
+
+Every frame below was rendered by the plugin's own code at 30 Hz, exactly as it would be handed to the engine (`tools/build_screenshots.py`, DejaVu fonts as substitutes). These are not videos of the e-ink panel.
+
+| Inertial carousel | Tabs and counters |
 | :---: | :---: |
-| ![Carrousel des cadrans : glisser, lancer, accrocher](docs/media/carrousel.gif) | ![Onglets qui glissent, pastille qui suit, compteurs qui montent](docs/media/onglets.gif) |
-| **Modules : feuille et cadre volant** | **Réglages : segments, défilement élastique, brouillon** |
-| ![Choisir une complication : la feuille monte, un cadre vole jusqu'à l'emplacement](docs/media/modules.gif) | ![Fréquence qui glisse, défilement avec rebond, barre de brouillon](docs/media/reglages.gif) |
+| ![Face carousel: drag, fling, snap](docs/media/carousel.gif) | ![Sliding tabs, gliding pill, counting numbers](docs/media/tabs.gif) |
+| **Modules: sheet and flying frame** | **Settings: segments, elastic scrolling, draft** |
+| ![Pick a complication: the sheet rises, a frame flies to its slot](docs/media/modules.gif) | ![Gliding refresh choice, bouncy scrolling, draft bar](docs/media/settings.gif) |
 
-| « Afficher » : l'aperçu grandit jusqu'à l'horloge | Ce que voit la dalle : tramage Bayer 8×8 (simulation) |
+| "Show": the preview grows into the clock | What the panel gets: Bayer 8×8 dithering (simulation) |
 | :---: | :---: |
-| ![L'aperçu s'agrandit jusqu'au plein écran](docs/media/afficher.gif) | ![Image composée et sa version tramée en noir et blanc](docs/media/tramage.png) |
+| ![The preview zooms to full screen](docs/media/show-clock.gif) | ![Composed frame and its black-and-white dithered version](docs/media/dithering.png) |
 
-## Les écrans
+## Screens
 
-| Cadrans | Catalogue | Modules | Style |
+| Faces | Catalogue | Modules | Style |
 | :---: | :---: | :---: | :---: |
-| ![Mes cadrans](atelierclock.koplugin/docs/atelier-galerie.png) | ![Catalogue](atelierclock.koplugin/docs/atelier-catalogue.png) | ![Feuille des modules](atelierclock.koplugin/docs/atelier-modules.png) | ![Style](atelierclock.koplugin/docs/atelier-style.png) |
-| **Options** | **Veille** | **Diagnostic** | **Actions** |
-| ![Options](atelierclock.koplugin/docs/atelier-options.png) | ![Veille](atelierclock.koplugin/docs/atelier-veille.png) | ![Diagnostic](atelierclock.koplugin/docs/atelier-diagnostic.png) | ![Feuille d'actions](atelierclock.koplugin/docs/atelier-actions.png) |
+| ![My faces](atelierclock.koplugin/docs/atelier-galerie.png) | ![Catalogue](atelierclock.koplugin/docs/atelier-catalogue.png) | ![Modules sheet](atelierclock.koplugin/docs/atelier-modules.png) | ![Style](atelierclock.koplugin/docs/atelier-style.png) |
+| **Options** | **Sleep screen** | **Diagnostics** | **Actions** |
+| ![Options](atelierclock.koplugin/docs/atelier-options.png) | ![Sleep screen](atelierclock.koplugin/docs/atelier-veille.png) | ![Diagnostics](atelierclock.koplugin/docs/atelier-diagnostic.png) | ![Actions sheet](atelierclock.koplugin/docs/atelier-actions.png) |
 
-![Les dix cadrans inclus](atelierclock.koplugin/docs/collection.png)
+![The ten bundled faces](atelierclock.koplugin/docs/collection.png)
 
-## Ce qui change en 0.3.0
+## What's new in 0.3.0
 
-- **Une interface entièrement redessinée** à la main : cartes à coins doux, boutons en pilule, contrôles segmentés à pastille glissante, interrupteurs animés et 38 icônes vectorielles à trait arrondi. Le noir plein est réservé à l'action principale.
-- **Des listes qui défilent** au lieu de pages numérotées. Le défilement est inertiel, avec un bord élastique, et le doigt arrête l'élan immédiatement.
-- **Un carrousel de cadrans** : glisser, lancer, accrocher. Les cadrans voisins dépassent sur les bords et s'estompent avec la distance.
-- **Des feuilles qui montent du bas** pour les modules, les choix, les actions (⋯) et les confirmations. Elles remplacent les fenêtres de KOReader, se ferment d'un geste vers le bas et ne rendent pas la main à KOReader.
-- **Un brouillon visible** : la barre *Brouillon · Annuler · Appliquer* n'apparaît que s'il y a quelque chose à appliquer. Les messages s'affichent en notifications brèves.
-- **« Afficher » ouvre l'horloge par un zoom** depuis l'aperçu.
-- **Moteur Fluid Ink 6.5 intégré**, avec un profil choisi automatiquement selon la liseuse (tableau ci-dessous) et un repli propre. **Diagnostic → Affichage** indique le moteur actif et ses cadences en direct.
-- **Le RTC vérifié sur chaque liseuse compatible** : 7 Kobo et 3 Kindle. La prise en charge des Kindle (réveil via powerd) est nouvelle.
-- **Aucune fonction retirée.** La liste écran par écran est dans [docs/FONCTIONS.md](docs/FONCTIONS.md).
+- **A hand-drawn interface.** Soft cards, pill buttons, segmented controls with a gliding pill, animated switches and 38 vector icons with rounded strokes. Solid black is kept for the main action.
+- **Scrolling lists instead of numbered pages.** Scrolling has momentum and an elastic edge, and touching the screen stops it at once.
+- **A face carousel.** Drag, fling, snap. Neighbouring faces peek in from the sides and fade with distance.
+- **Bottom sheets** for modules, choices, actions (⋯) and confirmations. They replace KOReader dialogs, close with a downward swipe and never hand the screen back to KOReader.
+- **A visible draft.** The *Draft · Cancel · Apply* bar appears only when there is something to apply. Messages show up as short toasts.
+- **"Show" zooms** from the preview into the full-screen clock.
+- **Every 10 minutes** joins the refresh choices: 1, 5, 10 or 15 minutes, or static.
+- **English interface.** Every screen, message and menu is in English. The clock faces keep their own *Clock language* setting (English or French).
+- **Built-in Fluid Ink 6.5 engine.** The profile is picked automatically for each reader (table below), with a clean fallback. **Diagnostics → Display** shows the active engine and its live rates.
+- **RTC wake-up checked on every compatible reader**: 7 Kobo models and 3 Kindles. Kindle support (wake-up through powerd) is new.
+- **Nothing removed.** See [docs/FEATURES.md](docs/FEATURES.md).
 
-## Moteur d'affichage
+## Display engine
 
-| Liseuse | Profil | Réglage |
+| Reader | Profile | Settings |
 |---|---|---|
-| **Kobo Aura Edition 2 v1** (`Kobo_star`) | **Fluide 30 Hz · Impulsions 2** | Fluid Ink v6, 2 impulsions, **Débit** (file 1, Bayer 8×8, sans gamma), A2, 30 ips ciblées |
-| Kobo Aura 2 v2, Aura H2O 2 v1/v2, Glo HD, Aura One, Clara HD, Kindle Paperwhite 2/3, Voyage | **Fluide v6 · sans impulsions** | Mode constructeur : A2 en mouvement, DU au repos, profil Débit |
-| Aura 2 v1 dont les impulsions sont refusées | **Fluide v6 · sans impulsions** | Fluid Ink v6, repli signalé dans le Diagnostic |
-| Toute autre liseuse, ou si la vérification échoue | **Classique KOReader** | Mêmes écrans, animations remplacées par leur état final |
+| **Kobo Aura Edition 2 v1** (`Kobo_star`) | **Fluid 30 Hz · Pulses 2** | Fluid Ink v6, 2 pulses, **Throughput** (queue 1, Bayer 8×8, no gamma), A2, 30 fps target |
+| Kobo Aura 2 v2, Aura H2O 2 v1/v2, Glo HD, Aura One, Clara HD, Kindle Paperwhite 2/3, Voyage | **Fluid v6 · no pulses** | Vendor mode: A2 while moving, DU at rest, Throughput profile |
+| Aura 2 v1 whose pulses are refused | **Fluid v6 · no pulses** | Fluid Ink v6; the fallback is shown in Diagnostics |
+| Any other reader, or when the check fails | **Classic KOReader** | Same screens, each animation replaced by its final state |
 
-Comment ça marche :
+How it works:
 
-- L'atelier compose chaque image en niveaux de gris 8 bits à partir de couches gardées en mémoire (en-tête, contenu défilant, cartes, feuilles), puis la transmet au moteur.
-- Le moteur tourne dans un processus séparé, après une vérification en mémoire (sans toucher à l'écran), et reste le seul à écrire sur l'écran tant qu'il est actif.
-- Pour la saisie de texte (nom, chemin d'import ou d'export), il s'arrête, restaure la table d'origine et rend l'écran à KOReader, puis reprend. Le premier affichage après la reprise peut provoquer un flash GC16.
-- Avant chaque veille, le moteur est arrêté de façon synchrone : l'horloge de veille garde son chemin d'énergie habituel et n'utilise jamais Fluid Ink.
+- The studio composes every frame in 8-bit greyscale from layers kept in memory (header, scrolling content, cards, sheets), then hands it to the engine.
+- The engine runs in a separate process, after a RAM-only check that never touches the screen. While it runs, it is the only thing writing to the panel.
+- For text entry (a name, an import or export path), the engine stops, restores the original waveform table and gives the screen back to KOReader, then resumes. The first frame after resuming may flash (GC16).
+- Before every sleep, the engine is stopped synchronously, so the sleep-screen clock keeps its usual power path and never uses Fluid Ink.
 
-Réglages dans **Diagnostic → Affichage** :
+Settings live in **Diagnostics → Display**:
 
-| Réglage | Valeurs |
+| Setting | Values |
 |---|---|
-| Moteur | Automatique, Fluide ou Classique |
-| Cadence cible | 30, 45 ou 60 Hz |
-| Nettoyage au repos | Rafraîchissement constructeur du moteur pendant les pauses |
-| Animations | Complètes ou Réduites |
+| Display engine | Automatic, Fluid or Classic |
+| Target frame rate | 30, 45 or 60 Hz |
+| Clean at rest | The engine's vendor refresh during pauses |
+| Animations | Full or Reduced |
 
-On y trouve aussi les actions **Nettoyer l'écran** et **Réessayer le moteur fluide**.
+The same section has **Clean the screen** and **Retry the fluid engine**.
 
-> **Impulsions 2 sur l'Aura 2 v1.** Le profil à impulsions a besoin de la copie de waveform `factory-reference.bin` de **votre** liseuse. Il s'agit d'un fichier constructeur personnel : ce dépôt ne le redistribue pas. Copiez-le depuis votre paquet Fluid Ink 6.5 (`inkmotion.koplugin/factory-reference.bin`) vers `atelierclock.koplugin/engine/fluidink/`. Sans ce fichier, l'Aura 2 v1 passe automatiquement en **Fluide v6 · sans impulsions**.
+> **Pulses 2 on the Aura 2 v1.** The pulse profile needs the waveform copy `factory-reference.bin` from **your own** reader. It is a personal vendor file and this repository does not redistribute it. Copy it from your Fluid Ink 6.5 package (`inkmotion.koplugin/factory-reference.bin`) into `atelierclock.koplugin/engine/fluidink/`. Without it, the Aura 2 v1 switches to **Fluid v6 · no pulses** automatically.
 
-La fluidité réelle, le contraste et les traces se mesurent sur la dalle (voir `third_party/fluid-ink/PROTOCOLE_30HZ.md`). Les compteurs du Diagnostic indiquent les images soumises et les scans confirmés, pas une cadence optique.
+Real smoothness, contrast and ghosting have to be measured on the panel (see `third_party/fluid-ink/PROTOCOLE_30HZ.md`). The Diagnostics counters report submitted frames and confirmed scans, not optical cadence.
 
-## Réveil RTC selon la liseuse
+## RTC wake-up by reader
 
-| Liseuse | Réveil | Remarques |
+| Reader | Wake-up | Notes |
 |---|---|---|
-| Kobo : `Kobo_star`, `Kobo_star_r2`, `Kobo_snow`, `Kobo_snow_r2`, `Kobo_alyssum`, `Kobo_daylight`, `Kobo_nova` | RTC matériel (`WakeupMgr`), suspension gérée par KOReader | Les optimisations Aura 2 (réveil prioritaire, réutilisation de la préparation, veille FP9928) restent réservées aux modèles déjà ciblés. Sur un RTC i.MX5, la chaîne d'alarmes d'une longue pause est nettoyée à l'arrêt. |
-| Kindle Paperwhite 2/3, Voyage | `WakeupMgr` + `mockrtc` via powerd | Nécessite l'écran de veille de KOReader (Kindle sans offres spéciales). powerd suspend la liseuse lui-même. Un garde rattrape la minute si la liseuse est restée éveillée, ou si une alarme passée a été supprimée. Précision d'environ 15 s : 5 minutes sont conseillées. |
-| Sans `WakeupMgr` | Aucun | Horloge figée à l'endormissement, avec un message explicite. |
+| Kobo: `Kobo_star`, `Kobo_star_r2`, `Kobo_snow`, `Kobo_snow_r2`, `Kobo_alyssum`, `Kobo_daylight`, `Kobo_nova` | Hardware RTC (`WakeupMgr`), suspend handled by KOReader | The Aura 2 optimisations (priority wake-up, reused suspend preparation, FP9928 standby) stay limited to the models already targeted. On i.MX5 RTCs, the alarm chain of a long night pause is cleaned up on stop. |
+| Kindle Paperwhite 2/3, Voyage | `WakeupMgr` + `mockrtc` through powerd | Needs the KOReader sleep screen (Kindles without special offers). powerd suspends the reader itself. A guard catches the minute if the reader stayed awake, or if a past alarm was dropped. About 15 s precision, so 5 minutes is recommended. |
+| No `WakeupMgr` | None | The clock freezes when the reader sleeps, with an explicit message. |
 
-Ces comportements sont testés avec le vrai code de KOReader (`wakeupmgr.lua`, `kindle/mockrtc.lua`, fonctions de réveil de `kindle/powerd.lua`), épinglé à un commit précis. Ils n'ont pas été mesurés sur appareil.
+These behaviours are tested against KOReader's own code (`wakeupmgr.lua`, `kindle/mockrtc.lua`, and the wake-up functions of `kindle/powerd.lua`), pinned to a specific commit. They were not measured on hardware.
 
 ## Installation
 
-1. Quitter KOReader.
-2. Copier le dossier **`atelierclock.koplugin`** dans `koreader/plugins/`. Sur Kobo, c'est généralement `.adds/koreader/plugins/`. Lors d'une mise à jour, **remplacer** le dossier entier plutôt que de fusionner. Conserver `settings/atelierclock`, qui contient vos réglages et vos imports.
-3. Aura 2 v1 : ajouter `factory-reference.bin` comme indiqué plus haut.
-4. Relancer KOReader et ouvrir **Outils → Plus d'outils → Atelier Clock**.
-5. Dans **Veille**, activer *Horloge en veille*. L'option **Horloge Atelier** apparaît aussi dans le menu d'écran de veille de KOReader.
+1. Quit KOReader.
+2. Copy the **`atelierclock.koplugin`** folder into `koreader/plugins/`. On a Kobo this is usually `.adds/koreader/plugins/`.
+   - When updating, **replace** the whole folder instead of merging it.
+   - Keep `settings/atelierclock`: it holds your settings and your imported faces.
+3. Aura 2 v1 only: add `factory-reference.bin` as described above.
+4. Restart KOReader and open **Tools → More tools → Atelier Clock**.
+5. In **Sleep**, turn on *Clock on the sleep screen*. The **Atelier clock** option is also available in KOReader's own sleep screen menu.
 
-Pour lancer l'horloge à la main, utiliser **Afficher** (ou l'action Dispatcher *Atelier Clock : afficher*). Un toucher la ferme, un appui long ouvre l'atelier. Les cadrans `.clock` v1 et v2 s'importent depuis le **Catalogue**, et chaque variante s'exporte depuis **Modifier → Options**.
+To run the clock by hand, use **Show** or the Dispatcher action *Atelier Clock: show the clock*. A tap closes it and a long press opens the studio. `.clock` faces (v1 and v2) are imported from the **Catalogue**, and any variant can be exported from **Edit → Options**.
 
-## Développement
+## Development
 
-Le guide est dans [DEVELOPPEMENT.md](DEVELOPPEMENT.md). En résumé :
+The full guide is in [DEVELOPPEMENT.md](DEVELOPPEMENT.md), which is in French. The short version:
 
 ```bash
 python -m pip install -r requirements-test.txt
@@ -115,27 +127,13 @@ PYTHONPATH=tests python -m unittest discover -s tests -p 'test_*.py'
 PYTHONPATH=tests python tools/build_screenshots.py
 ```
 
-La suite compte **168 tests** : rendu, énergie, RTC sur les 10 modèles, moteur Fluid simulé et animations à horloge déterministe. Le validateur de plugin KOReader ne signale aucune erreur.
+The suite has **169 tests**: rendering, power, RTC on all 10 models, the 10-minute profile, the simulated Fluid engine and animations on a deterministic clock. KOReader's plugin validator reports no errors.
 
 ## Licences
 
-- **Code d'Atelier Clock** : MIT.
-- **Cadrans et textures** : CC0.
-- **Moteur Fluid Ink** (`engine/fluidink`) : ses en-têtes indiquent GPL-3.0-or-later, et son paquet est livré avec le texte de l'AGPL-3.0. Ses sources natives sont dans `third_party/fluid-ink`.
-- **Le plugin distribué dans son ensemble** suit le fichier [LICENSE](LICENSE) (AGPL-3.0, comme ce dépôt auparavant).
+- **Atelier Clock code**: MIT.
+- **Faces and textures**: CC0.
+- **Fluid Ink engine** (`engine/fluidink`): its headers say GPL-3.0-or-later, and its package ships the AGPL-3.0 text. Its native sources are in `third_party/fluid-ink`.
+- **The plugin as distributed** follows [LICENSE](LICENSE) (AGPL-3.0, as this repository did before).
 
-Le détail figure dans `atelierclock.koplugin/LICENSE`.
-
----
-
-## English summary
-
-Atelier Clock is a KOReader screensaver clock (RTC wake-up every minute, ten `.clock` faces, complications) with a full-screen editor.
-
-Version 0.3.0 redesigns the whole interface for the **Fluid Ink 6.5** engine. On a **Kobo Aura Edition 2 v1** it uses *Fluid Ink v6 · Impulsions 2 · Débit* (30 fps target), and other Fluid-compatible readers use *Fluid Ink v6 without pulses*. The interface has inertial scrolling, a snapping carousel, bottom sheets, gliding segmented controls, animated switches and a zoom into the clock. Every other device falls back to classic KOReader refreshes with identical screens and no animation.
-
-RTC wake-ups are checked for all 7 Fluid-compatible Kobo models (hardware RTC) and the Kindle PW2/PW3/Voyage (powerd + mockrtc, about 15 s precision).
-
-Nothing was removed; see [docs/FONCTIONS.md](docs/FONCTIONS.md) and the [CHANGELOG](CHANGELOG.md).
-
-The personal vendor waveform `factory-reference.bin` needed for pulses is **not** redistributed: copy it from your own Fluid Ink package. Optical cadence and ghosting were not measured on hardware.
+Details are in `atelierclock.koplugin/LICENSE`.

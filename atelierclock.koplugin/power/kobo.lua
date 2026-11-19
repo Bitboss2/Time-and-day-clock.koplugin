@@ -92,7 +92,7 @@ function K:observeWake(device,count)
         local seconds=Measure.seconds(device.last_suspend_time)
         if not seconds or seconds<1 or total<=(self.last_observed_total or 0)then
             self.direct_disabled=true;self.direct_fallbacks=(self.direct_fallbacks or 0)+1
-            self.direct_reason="Retour natif après suspension trop courte"
+            self.direct_reason="Native fallback after a too short suspend"
         end
         self.direct_pending=false;self.direct_entered=false
     end
@@ -155,7 +155,7 @@ function K:install()
                 if not self:flagIsSuspended()or not self:environmentIdle()then
                     self.direct_pending=false;self.direct_disabled=true
                     self.direct_fallbacks=(self.direct_fallbacks or 0)+1
-                    self.direct_reason="Préparation native : drapeau, réseau ou charge modifiés"
+                    self.direct_reason="Native preparation: flag, network or charging changed"
                     device:rescheduleSuspend(a.settings.data.wake_margin);return
                 end
                 self.direct_entered=true;self.direct_used=(self.direct_used or 0)+1
@@ -182,7 +182,7 @@ function K:install()
         -- A past owned alarm cannot wake the kernel again. Repair it while the
         -- kernel is awake, before the native unexpected-wakeup limit can stop it.
         if active and first and first.callback==p.callback and stale
-            and p:recoverDue(os.time(),"échéance de l'horloge dépassée") then
+            and p:recoverDue(os.time(),"clock deadline passed") then
             a.ui:scheduleIn(30,device.suspend,device)
             return
         end
@@ -195,7 +195,7 @@ function K:install()
         if active and p.active and a.session and not a.session.user_resumed then
             first=device.wakeup_mgr and device.wakeup_mgr._task_queue[1]
             if not p.deferred and first and first.callback==p.callback and first.epoch<=os.time() then
-                p:recoverDue(os.time(),"collision avec une alarme KOReader")
+                p:recoverDue(os.time(),"collision with a KOReader alarm")
             end
             -- The inverse ordering matters too: our callback may have been
             -- first, with another plugin due immediately after it. Delegate
@@ -330,7 +330,7 @@ function K:sleep(token,render_ok)
     end)
     local waited=painted and result==true
     if not painted then
-        self.direct_disabled=true;self.direct_reason="Préparation native : attente écran en échec"
+        self.direct_disabled=true;self.direct_reason="Native preparation: screen wait failed"
         p:record("screen_wait_error",tostring(result))
     end
     local finished=Measure.now()
@@ -355,7 +355,7 @@ function K:sleep(token,render_ok)
     if render_ok~=false and self.settle:plan()then
         a.ui:unschedule(d.suspend);a.ui:unschedule(d._doSuspend);a.ui:unschedule(d.checkUnexpectedWakeup)
         a.ui:scheduleIn(self.settle:delay(),d.checkUnexpectedWakeup,d)
-        self.direct_pending=false;self.direct_reason="Veille RTC native jusqu’à la prochaine minute"
+        self.direct_pending=false;self.direct_reason="Native RTC standby until the next minute"
         return
     end
     self:rescheduleReturn(a.settings.data.wake_margin)
@@ -365,17 +365,17 @@ function K:sleep(token,render_ok)
         -- resume method cancels this same _doSuspend callback on user input.
         a.ui:unschedule(d.suspend)
         self.direct_pending=true;self.direct_entered=false;self.direct_generation=token
-        self.direct_reason="Préparation réutilisée après fin de l’affichage"
+        self.direct_reason="Preparation reused after the display finished"
         a.ui:scheduleIn(a.settings.data.wake_margin,d._doSuspend,d)
     else
         self.direct_pending=false
         if not self.direct_disabled then
-            if not self.reuse_supported then self.direct_reason="Préparation native : modèle non ciblé"
-            elseif a.settings.data.reuse_suspend==false then self.direct_reason="Réutilisation désactivée"
-            elseif not healthy then self.direct_reason="Préparation native : sommeil non validé"
-            elseif not waited then self.direct_reason="Préparation native : attente écran indisponible"
-            elseif flag~=true then self.direct_reason="Préparation native : drapeau noyau absent ou inactif"
-            else self.direct_reason="Préparation native : API écran ou suspension incompatible"end
+            if not self.reuse_supported then self.direct_reason="Native preparation: model not targeted"
+            elseif a.settings.data.reuse_suspend==false then self.direct_reason="Reuse disabled"
+            elseif not healthy then self.direct_reason="Native preparation: sleep not validated"
+            elseif not waited then self.direct_reason="Native preparation: screen wait unavailable"
+            elseif flag~=true then self.direct_reason="Native preparation: kernel flag missing or inactive"
+            else self.direct_reason="Native preparation: incompatible screen or suspend API"end
         end
     end
 end

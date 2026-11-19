@@ -1,6 +1,6 @@
 Atelier Clock 0.3.0 — licences
 
-1. Code d'Atelier Clock (tous les fichiers hors engine/fluidink/) :
+1. Atelier Clock code (every file outside engine/fluidink/):
    SPDX-License-Identifier: MIT
 
    Copyright (c) 2026 Atelier Clock contributors
@@ -23,15 +23,16 @@ Atelier Clock 0.3.0 — licences
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 
-   Manifestes et textures originaux des cadrans (clocks/*.clock) : CC0.
+   Original face manifests and textures (clocks/*.clock): CC0.
 
-2. Moteur Fluid Ink 6.5.0 embarqué (engine/fluidink/) :
-   en-têtes SPDX GPL-3.0-or-later ; texte de licence fourni avec le moteur :
-   engine/fluidink/COPYING. Sources natives correspondantes : dossier
-   third_party/fluid-ink/ du dépôt. Voir engine/fluidink/THIRD_PARTY_NOTICES.md.
-   factory-reference.bin (copie personnelle de waveform constructeur) n'est
-   pas redistribué ; il n'est couvert par aucune de ces licences.
+2. Bundled Fluid Ink 6.5.0 engine (engine/fluidink/):
+   SPDX headers say GPL-3.0-or-later; the licence text shipped with the
+   engine is engine/fluidink/COPYING. The matching native sources are in the
+   repository's third_party/fluid-ink/ folder. See
+   engine/fluidink/THIRD_PARTY_NOTICES.md. factory-reference.bin (a personal
+   copy of a vendor waveform) is not redistributed and is covered by none of
+   these licences.
 
-3. Le plugin distribué dans son ensemble (Atelier + moteur) est diffusé selon
-   les termes de la licence copyleft du moteur (fichier LICENSE à la racine du
-   dépôt). Le code MIT d'Atelier reste réutilisable seul sous MIT.
+3. The plugin as distributed (Atelier + engine) follows the copyleft licence
+   of the engine (LICENSE file at the root of the repository). Atelier's MIT
+   code remains reusable on its own under MIT.

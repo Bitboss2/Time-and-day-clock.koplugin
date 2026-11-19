@@ -3,7 +3,7 @@ local U = load("core/util")
 local S = {}
 S.defaults = {
     schema_version = 1, face = "totem", favorites = {}, ui_scale=100, collection={}, active_id="",
-    format = "follow", night = "follow", rotation = "follow", locale = "fr",
+    format = "follow", night = "follow", rotation = "follow", locale = "en",
     auto_layout = true, gap = 20, scale = 100, outline = 0,
     separator = "none", border = "none", analog_numerals = "arabic", hour_width = 6, minute_width = 4,
     show_date = true, show_battery = true, show_wifi = false, show_memory = false, show_world = false,
@@ -48,8 +48,8 @@ local function merge(target, source, defaults)
     end
 end
 function S.validate(data)
-    assert(type(data)=="table", "Réglages invalides")
-    assert(data.schema_version == nil or data.schema_version == 1, "Version de réglages inconnue")
+    assert(type(data)=="table", "Invalid settings")
+    assert(data.schema_version == nil or data.schema_version == 1, "Unknown settings version")
     local r = U.copy(S.defaults); merge(r, data, S.defaults)
     for k, values in pairs(S.choices) do
         local ok=false; for _,v in ipairs(values) do if r[k]==v then ok=true end end
@@ -60,7 +60,7 @@ function S.validate(data)
         r[k]=U.clamp(r[k],bound[1],bound[2])
     end
     if r.display_fps~=30 and r.display_fps~=45 and r.display_fps~=60 then r.display_fps=30 end
-    if r.interval~=0 and r.interval~=60 and r.interval~=300 and r.interval~=900 then r.interval=60 end
+    if r.interval~=0 and r.interval~=60 and r.interval~=300 and r.interval~=600 and r.interval~=900 then r.interval=60 end
     for _,k in ipairs({"time","date","battery","wifi","memory","world"}) do
         local e=r[k]
         for _,n in ipairs({"size","x","y","z"}) do if e[n]~=e[n] or math.abs(e[n])==math.huge then e[n]=S.defaults[k][n] end end
@@ -95,7 +95,7 @@ function S.new(path)
     if b then
         local ok, data=pcall(require("json").decode,b)
         if ok then local valid, r=pcall(S.validate,data);if valid then self.data=r else self.warning=tostring(r) end
-        else self.warning="Réglages illisibles ; valeurs de secours chargées." end
+        else self.warning="Unreadable settings; fallback values loaded." end
     end
     return self
 end

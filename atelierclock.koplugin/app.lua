@@ -20,8 +20,8 @@ function App.new(root,loader)
         refresh=function()
             local capacity=self:capacity()
             if capacity and capacity<=self.settings.data.low_battery and self.settings.data.low_battery>0 then
-                self.scheduler:stop();self.notice="Batterie basse : horloge désormais statique."
-                self.paused_warning="BATTERIE BASSE / HEURE FIGÉE"
+                self.scheduler:stop();self.notice="Low battery: the clock is now static."
+                self.paused_warning="battery"
                 if self.clock then self.clock:update() end
                 return
             end
@@ -42,7 +42,7 @@ function App.new(root,loader)
         failed=function(e)
             self.notice=e
             if not self.scheduler.active then
-                self.paused_warning="ACTUALISATION ARRÊTÉE / VOIR DIAGNOSTIC"
+                self.paused_warning="stopped"
                 if self.clock and not self.clock.closed then pcall(self.clock.update,self.clock)end
             end
         end,
@@ -71,14 +71,14 @@ function App:scan()
             local path=folder.."/"..name
             local ok,face=pcall(R.open,path,self.data_dir.."/cache")
             if ok and not ids[face.id] then self.faces[#self.faces+1]=face;ids[face.id]=true
-            else self.errors[#self.errors+1]=name.." : "..(ok and "identifiant déjà installé" or tostring(face)) end
+            else self.errors[#self.errors+1]=name.." : "..(ok and "identifier already installed" or tostring(face)) end
         end
     end
     table.sort(self.faces,function(a,b)return (a.order or 100)<(b.order or 100) or (a.order or 100)==(b.order or 100) and a.id<b.id end)
 end
 function App:face(id)
     for _,f in ipairs(self.faces) do if f.id==(id or self.settings.data.face) then return f end end
-    assert(self.faces[1],"Aucun cadran .clock valide. Réinstaller le plugin complet.")
+    assert(self.faces[1],"No valid .clock face. Reinstall the complete plugin.")
     return self.faces[1]
 end
 function App:readingSnapshot()
@@ -115,7 +115,7 @@ function App:stop(reason)
         self.session.user_resumed=true
         self.last_session={started=self.session.started,ended=os.time(),end_reason=reason or "session ended"}
         local saved,err=load("power/report").write(self,"last-session.json",false,reason or "session ended")
-        if not saved then self.notice="Diagnostic de session non enregistré : "..tostring(err)end
+        if not saved then self.notice="Session diagnostics not saved: "..tostring(err)end
         local rotation=self.session.rotation
         self.session=nil
         if rotation~=nil then self.device.screen:setRotationMode(rotation) end
@@ -125,7 +125,7 @@ function App:resume()
     -- Hardware RTC processing does not broadcast a user Resume in Kobo's normal
     -- suspend path. A Resume event is treated as explicit user ownership.
     if self.session then self.session.user_resumed=true end
-    self:stop("réveil utilisateur")
+    self:stop("user wake-up")
 end
 function App:open()
     if self.editor and not self.editor.closed then self.ui:close(self.editor) end
@@ -164,7 +164,7 @@ function App:backgroundImage(s,landscape,now)
     if not list then
         list={};local lfs=require("libs/libkoreader-lfs")
         local ok=pcall(function()for name in lfs.dir(folder) do if name:lower():match("%.png$") then list[#list+1]=folder.."/"..name end end end)
-        if not ok then self.notice="Dossier d'images inaccessible." end
+        if not ok then self.notice="Image folder not accessible." end
         table.sort(list);self.image_lists[folder]=list
     end
     if #list==0 then return nil end
@@ -173,7 +173,7 @@ end
 function App:validImage(path)
     if self.valid_images[path]~=nil then return self.valid_images[path] and path or nil end
     local f=io.open(path,"rb")
-    if not f then self.valid_images[path]=false;self.notice="Image introuvable : "..path;return nil end
+    if not f then self.valid_images[path]=false;self.notice="Image not found: "..path;return nil end
     local size=f:seek("end");f:seek("set",0);local b=f:read(24);f:close()
     local ok=false
     if size and size<=16*1024*1024 and b and #b==24 and b:sub(1,8)=="\137PNG\13\10\26\10" then
@@ -181,16 +181,16 @@ function App:validImage(path)
         local w,h=be(17),be(21);ok=w>0 and h>0 and w*h<=4000000
     end
     self.valid_images[path]=ok
-    if not ok then self.notice="Image PNG invalide ou trop grande : "..path end
+    if not ok then self.notice="Invalid or too large PNG image: "..path end
     return ok and path or nil
 end
 function App:import(path)
-    if type(path)~="string" or not path:match("%.clock$") then return nil,"Choisir un fichier .clock" end
+    if type(path)~="string" or not path:match("%.clock$") then return nil,"Choose a .clock file" end
     local R=load("packages/reader")
     local ok,f=pcall(R.open,path,self.data_dir.."/cache")
     if not ok then return nil,tostring(f) end
-    for _,face in ipairs(self.faces) do if face.id==f.id then return nil,"Ce cadran est déjà installé : "..f.id end end
-    local bytes=U.read(path,16*1024*1024);if not bytes then return nil,"Fichier inaccessible" end
+    for _,face in ipairs(self.faces) do if face.id==f.id then return nil,"This face is already installed: "..f.id end end
+    local bytes=U.read(path,16*1024*1024);if not bytes then return nil,"File not accessible" end
     local dest=self.data_dir.."/clocks/"..f.id..".clock"
     local written,e=U.write(dest..".tmp",bytes);if not written then return nil,e end
     local renamed,re=os.rename(dest..".tmp",dest);if not renamed then return nil,re end

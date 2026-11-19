@@ -3,14 +3,14 @@ local load=...
 local U=load("core/util")
 local L={}
 function L.parse(source)
-    assert(type(source)=="string" and #source<=131072,"Configuration trop volumineuse")
+    assert(type(source)=="string" and #source<=131072,"Configuration too large")
     local p=1
     local function skip()
         while true do
             local _,e=source:find("^%s+",p)
             if e then p=e+1 end
             if source:sub(p,p+1)=="--" then
-                assert(source:sub(p+2,p+3)~="[[","Commentaires longs non pris en charge")
+                assert(source:sub(p+2,p+3)~="[[","Long comments not supported")
                 local n=source:find("\n",p+2,true);p=n and n+1 or #source+1
             else return end
         end
@@ -23,16 +23,16 @@ function L.parse(source)
             if c=="\\" then
                 c=source:sub(p,p);p=p+1
                 local escapes={n="\n",r="\r",t="\t",['\\']='\\',["'"]="'",['"']='"'}
-                assert(escapes[c],"Échappement Lua non pris en charge")
+                assert(escapes[c],"Unsupported Lua escape")
                 c=escapes[c]
             end
             out[#out+1]=c
         end
-        error("Chaîne non terminée")
+        error("Unterminated string")
     end
     local value
     value=function(depth)
-        assert(depth<=20,"Table trop profonde");skip();local c=source:sub(p,p)
+        assert(depth<=20,"Table too deep");skip();local c=source:sub(p,p)
         if c=='"' or c=="'" then return literal_string() end
         if c=="{" then
             p=p+1;local t={};local index=1
@@ -40,17 +40,17 @@ function L.parse(source)
                 skip();if source:sub(p,p)=="}" then p=p+1;return t end
                 local key,v
                 if source:sub(p,p)=="[" then
-                    p=p+1;key=value(depth+1);skip();assert(source:sub(p,p)=="]","Clé invalide");p=p+1;skip()
-                    assert(source:sub(p,p)=="=","Affectation attendue");p=p+1;v=value(depth+1)
+                    p=p+1;key=value(depth+1);skip();assert(source:sub(p,p)=="]","Invalid key");p=p+1;skip()
+                    assert(source:sub(p,p)=="=","Assignment expected");p=p+1;v=value(depth+1)
                 else
                     local save=p;local id=source:match("^([%a_][%w_]*)",p)
                     if id then p=p+#id;skip() end
                     if id and source:sub(p,p)=="=" then key=id;p=p+1;v=value(depth+1)
                     else p=save;key=index;index=index+1;v=value(depth+1) end
                 end
-                assert(type(key)=="string" or type(key)=="number","Clé interdite")
+                assert(type(key)=="string" or type(key)=="number","Forbidden key")
                 t[key]=v;skip();local sep=source:sub(p,p)
-                if sep=="," or sep==";" then p=p+1 else assert(sep=="}","Séparateur attendu") end
+                if sep=="," or sep==";" then p=p+1 else assert(sep=="}","Separator expected") end
             end
         end
         local number=source:match("^([+-]?%d+%.?%d*)",p)
@@ -60,10 +60,10 @@ function L.parse(source)
                 p=p+#word;if word=="nil" then return nil end;return word=="true"
             end
         end
-        error("Expression Lua refusée à la position "..p)
+        error("Lua expression refused at position "..p)
     end
     skip();if source:sub(p,p+5)=="return" then p=p+6 end
-    local t=value(0);skip();assert(p>#source,"Code après la table refusé");assert(type(t)=="table","Table attendue")
+    local t=value(0);skip();assert(p>#source,"Code after the table refused");assert(type(t)=="table","Table expected")
     return t
 end
 function L.convert(old,base)
@@ -116,11 +116,11 @@ function L.convert(old,base)
             if e.unit then r.units=e.unit=="%" and "percent" or "px" end
         end
     end
-    if old.clock_style then report[#report+1]="Ancien cadran remplacé par la collection Atelier." end
+    if old.clock_style then report[#report+1]="Old clock style replaced by the Atelier collection." end
     if old.text_size then
         local sizes={small=75,medium=100,big=120,huge=145};r.scale=sizes[old.text_size] or r.scale
     end
-    report[#report+1]="Positions anciennes importées comme décalages : vérifier l'aperçu. Les scripts par image ne sont pas exécutés."
+    report[#report+1]="Old positions imported as offsets: check the preview. Per-image scripts are not executed."
     return load("core/settings").validate(r),table.concat(report," ")
 end
 return L

@@ -14,7 +14,8 @@ local BB=require("ffi/blitbuffer")
 local Geom=require("ui/geometry")
 local GestureRange=require("ui/gesturerange")
 local Studio=load("ui/studio_actions"):extend{covers_fullscreen=true,modal=true}
-local TABS={{"Galerie","Cadrans","gallery"},{"Composer","Modifier","edit"},{"Veille","Veille","moon"},{"Diagnostic","Diagnostic","pulse"}}
+-- Internal tab keys stay stable (settings, tests); the second field is the label.
+local TABS={{"Galerie","Faces","gallery"},{"Composer","Edit","edit"},{"Veille","Sleep","moon"},{"Diagnostic","Diagnostics","pulse"}}
 local function hit(r,x,y)return r and x>=r.x and x<=r.x+r.w and y>=r.y and y<=r.y+r.h end
 local function newBB(w,h)
     local b=BB.new(math.max(1,math.floor(w)),math.max(1,math.floor(h)),BB.TYPE_BB8)
@@ -132,7 +133,7 @@ function Studio:headerLayer()
     self.layers.header=b;return b
 end
 function Studio:headerInfo()
-    local t={Galerie=self.catalog and "Catalogue"or "Mes cadrans",Composer="Personnaliser",Veille="Veille",Diagnostic="Diagnostic"}
+    local t={Galerie=self.catalog and "Catalogue"or "My faces",Composer="Customise",Veille="Sleep screen",Diagnostic="Diagnostics"}
     local info={title=t[self.tab]or self.tab}
     if self.tab=="Composer"then
         local ok,face=pcall(self.app.face,self.app,self.draft.face)
@@ -186,10 +187,10 @@ function Studio:draftLayer()
     local b=newBB(w,h+6*k)
     kit:card(b,0,0,w,h,{radius=h/2,fill=0,stroke=false,shadow_color=Kit.shade})
     D.circle(b,h/2,h/2,5*k,255)
-    kit:text(b,"Brouillon",h/2+14*k,h/2-11*k,Kit.size.body,255,"left",w*.34,true)
+    kit:text(b,"Draft",h/2+14*k,h/2-11*k,Kit.size.body,255,"left",w*.34,true)
     local bw=w*.27
-    kit:button(b,w-bw-8*k,8*k,bw,h-16*k,"Appliquer",{style="secondary",icon="check",size=Kit.size.small,icon_size=18})
-    kit:text(b,"Annuler",w-bw-24*k,h/2-11*k,Kit.size.small,255,"right",w*.24,false)
+    kit:button(b,w-bw-8*k,8*k,bw,h-16*k,"Apply",{style="secondary",icon="check",size=Kit.size.small,icon_size=18})
+    kit:text(b,"Cancel",w-bw-24*k,h/2-11*k,Kit.size.small,255,"right",w*.24,false)
     self.layers.draft=b;return b
 end
 function Studio:drawDraftBar(f)
@@ -206,7 +207,7 @@ function Studio:drawDraftBar(f)
 end
 function Studio:cancelDraft()
     self.draft=U.copy(self.app.settings.data);self:clearDirty();self:layout()
-    self.status="Modifications annulées";self:refresh()
+    self.status="Changes discarded";self:refresh()
 end
 -- Toasts replace the old status line: short, animated, never blocking.
 function Studio:toast(text)
@@ -254,7 +255,7 @@ function Studio:ensureContent()
     self.collect=nil
     if not ok then
         self.content_error=tostring(err)
-        self.kit:text(self.content,"Affichage impossible : "..tostring(err),self.pad,20*self.k,Kit.size.small,0,"left",self.w-2*self.pad)
+        self.kit:text(self.content,"Cannot display: "..tostring(err),self.pad,20*self.k,Kit.size.small,0,"left",self.w-2*self.pad)
     end
     self.cview=view;self.content_dirty=false
     self.scroll:setBounds(0,height-vh)
@@ -552,7 +553,7 @@ function Studio:confirmSheet(title,text,ok_text,callback,danger)
         local p=self.pad
         self:paragraph(bb,text,p+4*k,6*k,w-2*p-8*k,Kit.size.body,3,Kit.muted)
         local bw=(w-2*p-12*k)/2;local y=78*k;local bh=52*k
-        kit:button(bb,p,y,bw,bh,"Annuler",{style="secondary"})
+        kit:button(bb,p,y,bw,bh,"Cancel",{style="secondary"})
         self:region(p,y,bw,bh,function()self:closeSheet()end,{radius=bh/2,role="cancel"})
         kit:button(bb,p+bw+12*k,y,bw,bh,ok_text,{style="primary",icon=danger and "trash"or "check"})
         self:region(p+bw+12*k,y,bw,bh,function()self:closeSheet();callback()end,{radius=bh/2,role="confirm"})

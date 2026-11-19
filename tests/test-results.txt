@@ -142,6 +142,7 @@ test_01_every_kobo_arms_cycles_and_cleans_its_alarm (test_rtc_devices.RtcDeviceT
 test_02_dodgy_rtc_long_quiet_pause_chain_is_cleaned (test_rtc_devices.RtcDeviceTests.test_02_dodgy_rtc_long_quiet_pause_chain_is_cleaned) ... ok
 test_03_kindle_rtc_via_powerd_scheduled_awake_and_dropped (test_rtc_devices.RtcDeviceTests.test_03_kindle_rtc_via_powerd_scheduled_awake_and_dropped) ... ok
 test_04_kindle_without_koreader_screensaver_is_static_and_says_so (test_rtc_devices.RtcDeviceTests.test_04_kindle_without_koreader_screensaver_is_static_and_says_so) ... ok
+test_05_ten_minute_profile_end_to_end (test_rtc_devices.RtcDeviceTests.test_05_ten_minute_profile_end_to_end) ... ok
 test_01_syntax (test_runtime.AtelierTests.test_01_syntax) ... ok
 test_02_ten_real_archives (test_runtime.AtelierTests.test_02_ten_real_archives) ... ok
 test_03_settings_roundtrip_validation (test_runtime.AtelierTests.test_03_settings_roundtrip_validation) ... ok
@@ -168,6 +169,6 @@ test_23_main_plugin_two_contexts_share_one_service (test_runtime.AtelierTests.te
 test_24_native_kobo_guard_and_resuspend_coordination (test_runtime.AtelierTests.test_24_native_kobo_guard_and_resuspend_coordination) ... ok
 
 ----------------------------------------------------------------------
-Ran 168 tests in 18.559s
+Ran 169 tests in 17.930s
 
 OK

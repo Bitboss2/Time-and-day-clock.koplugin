@@ -37,10 +37,10 @@ end
 function Plugin:onDispatcherRegisterActions()
     local Dispatcher = require("dispatcher")
     Dispatcher:registerAction("atelierclock_open", {
-        category = "none", event = "AtelierClockOpen", title = "Atelier Clock : atelier", general = true,
+        category = "none", event = "AtelierClockOpen", title = "Atelier Clock: open the studio", general = true,
     })
     Dispatcher:registerAction("atelierclock_launch", {
-        category = "none", event = "AtelierClockLaunch", title = "Atelier Clock : afficher", general = true,
+        category = "none", event = "AtelierClockLaunch", title = "Atelier Clock: show the clock", general = true,
     })
 end
 function Plugin:onAtelierClockOpen() self.app:open(); return true end
@@ -49,8 +49,8 @@ function Plugin:onResume() self.app:resume() end
 function Plugin:onOutOfScreenSaver() self.app:stop() end
 function Plugin:onCloseDocument() self.app:stop() end
 function Plugin:onUnexpectedWakeupLimit()
-    self.app:stop("limite de réveils KOReader")
-    self.app.notice="KOReader signale des échecs de suspension : réveils de l'horloge désactivés pour cette session."
+    self.app:stop("KOReader wake-up limit")
+    self.app.notice="KOReader reports suspend failures: clock wake-ups are disabled for this session."
 end
 function Plugin:onClose() self.app:stop() end
 return Plugin

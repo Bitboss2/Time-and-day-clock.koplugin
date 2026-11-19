@@ -1,6 +1,6 @@
 return {
     name = "atelierclock",
     fullname = "Atelier Clock",
-    description = "Horloges de veille et atelier plein écran animé. Interface fluide 30 Hz avec le moteur Fluid Ink sur les liseuses compatibles, repli KOReader ailleurs. Dix cadrans .clock inclus.",
+    description = "Sleep-screen clocks and an animated full-screen studio. Fluid 30 Hz interface with the Fluid Ink engine on compatible readers, classic KOReader refresh elsewhere. Ten .clock faces included.",
     version = "0.3.0",
 }

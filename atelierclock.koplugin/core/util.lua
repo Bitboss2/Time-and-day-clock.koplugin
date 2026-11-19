@@ -22,7 +22,7 @@ function U.mkdir(path)
         cur = cur .. part
         if not lfs.attributes(cur) then
             local ok, err = lfs.mkdir(cur); if not ok then return nil, err end
-        elseif lfs.attributes(cur, "mode") ~= "directory" then return nil, "Chemin occupé : " .. cur end
+        elseif lfs.attributes(cur, "mode") ~= "directory" then return nil, "Path in use: " .. cur end
         cur = cur .. "/"
     end
     return true

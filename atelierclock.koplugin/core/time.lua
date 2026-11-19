@@ -17,6 +17,19 @@ function T.next(now, settings)
     end
     return n
 end
+-- Status notes drawn on the clock face, in the face language.
+local notes={
+    battery={fr="BATTERIE BASSE / HEURE FIGÉE",en="LOW BATTERY / TIME FROZEN"},
+    rtc={fr="RTC INDISPONIBLE / HEURE FIGÉE",en="NO RTC WAKE-UP / TIME FROZEN"},
+    stopped={fr="ACTUALISATION ARRÊTÉE / VOIR DIAGNOSTIC",en="UPDATES STOPPED / SEE DIAGNOSTICS"},
+}
+function T.note(warning,s)
+    local fr=s.locale=="fr"
+    if warning then local n=notes[warning];return n and(fr and n.fr or n.en)or tostring(warning)end
+    if s.interval==0 then return fr and "HEURE À LA MISE EN VEILLE"or "TIME AT SLEEP"end
+    if s.interval>60 then local m=math.floor(s.interval/60);return fr and("≈ ACTUALISATION / "..m.." MIN")or("≈ UPDATED EVERY "..m.." MIN")end
+    return ""
+end
 local frdays={"dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"}
 local frmonths={"janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"}
 function T.date(now,s)
@@ -38,9 +51,25 @@ local function number(n)
     local tens=n<30 and "vingt" or n<40 and "trente" or n<50 and "quarante" or "cinquante"
     local a=n%10;return tens..(a==0 and "" or a==1 and " et un" or "-"..nums[a])
 end
+local ennums={[0]="zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve",
+    "thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"}
+local entens={[2]="twenty",[3]="thirty",[4]="forty",[5]="fifty"}
+local function ennumber(n)
+    if ennums[n] then return ennums[n] end
+    local t,u=math.floor(n/10),n%10
+    return entens[t]..(u==0 and "" or "-"..ennums[u])
+end
+-- English time in words: "seven" / "thirty-five", "noon" / "o'clock".
+local function enwords(d)
+    local h=d.hour%12
+    local hour=d.min==0 and d.hour==0 and "midnight" or d.min==0 and d.hour==12 and "noon" or ennumber(h==0 and 12 or h)
+    local m=d.min
+    if m==0 then return hour,(d.hour==0 or d.hour==12)and "exactly"or "o'clock" end
+    return hour,m<10 and "oh "..ennums[m] or ennumber(m)
+end
 function T.words(now,s)
     local d=os.date("*t",now)
-    if s.locale~="fr" then return os.date("%H",now).." hours",os.date("%M",now).." minutes" end
+    if s.locale~="fr" then return enwords(d) end
     local h=d.hour%12
     local hour=h==0 and (d.hour==0 and "minuit" or "midi") or number(h)..(h==1 and " heure" or " heures")
     local m=d.min

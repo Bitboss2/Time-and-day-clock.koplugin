@@ -76,7 +76,7 @@ La bêta 9 remplace le pont court de `power/settle.lua` par la veille native jus
 | `ui/faces.lua` | Carrousel, catalogue, édition v2, feuille des modules |
 | `power/capabilities.lua`, `power/kindle.lua` | RTC selon la liseuse, garde Kindle |
 
-`tests/test_fluid_ui.py` remplace uniquement la bibliothèque native, avec une fausse `native_factory`, et fait tourner le vrai code avec une horloge déterministe. `tests/test_rtc_devices.py` utilise `wakeupmgr.lua`, `kindle/mockrtc.lua` et les fonctions de réveil de `kindle/powerd.lua`, épinglés au commit KOReader de `fetch_test_dependencies.py`. La suite compte 168 tests.
+`tests/test_fluid_ui.py` remplace uniquement la bibliothèque native, avec une fausse `native_factory`, et fait tourner le vrai code avec une horloge déterministe. `tests/test_rtc_devices.py` utilise `wakeupmgr.lua`, `kindle/mockrtc.lua` et les fonctions de réveil de `kindle/powerd.lua`, épinglés au commit KOReader de `fetch_test_dependencies.py`. La suite compte 169 tests.
 
 Pour reproduire la livraison, lancer ces quatre commandes dans l'ordre :
 
@@ -96,4 +96,4 @@ python tools/build_release.py
 python3 <skill koreader-plugin>/scripts/check_plugin.py atelierclock.koplugin --koreader /tmp/koreader-src
 ```
 
-`build_screenshots.py` enregistre les images réellement publiées à 30 Hz par l'atelier (moteur simulé) et produit les captures du plugin (`atelierclock.koplugin/docs/atelier-*.png`), puis les GIF, le visuel d'en-tête et la simulation de tramage Bayer (`docs/media`). Si `factory-reference.bin` est présent localement, `build_release.py` l'inclut dans le ZIP produit : ce ZIP est alors personnel et ne doit pas être publié.
+`build_screenshots.py` enregistre les images réellement publiées à 30 Hz par l'atelier (moteur simulé) et produit les captures du plugin (`atelierclock.koplugin/docs/atelier-*.png`), puis les GIF, le visuel d'en-tête et la simulation de tramage Bayer (`docs/media`). Les visuels et l’interface sont en anglais. Si `factory-reference.bin` est présent localement, `build_release.py` l'inclut dans le ZIP produit : ce ZIP est alors personnel et ne doit pas être publié.

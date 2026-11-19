@@ -148,8 +148,39 @@ class RtcDeviceTests(unittest.TestCase):
             local caps=load_module('power/capabilities').detect(app.device)
             assert(caps.kind=='none' and not caps.available)
             local ss=require('ui/screensaver');ss.ui={};ss.prefix='';ss.screensaver_type='atelierclock';ss:show()
-            assert(not app.scheduler.active and app.paused_warning=='RTC INDISPONIBLE / HEURE FIGÉE')
+            assert(not app.scheduler.active and app.paused_warning=='rtc')
+            local s=load_module('core/util').copy(app.settings.data)
+            assert(load_module('core/time').note('rtc',{locale='en',interval=60})=='NO RTC WAKE-UP / TIME FROZEN')
+            s.locale='fr';assert(load_module('core/time').note('rtc',s)=='RTC INDISPONIBLE / HEURE FIGÉE')
             app:stop()
+        ''')
+
+    def test_05_ten_minute_profile_end_to_end(self):
+        r=self.runtime();app=r.app();r.lua.globals().app=app
+        r.lua.execute(r'''
+            local S=load_module('core/settings');local Time=load_module('core/time')
+            assert(S.validate{interval=600}.interval==600,'10 min rejected')
+            assert(S.validate{interval=420}.interval==60,'arbitrary interval accepted')
+            local t=os.time{year=2026,month=11,day=19,hour=14,min=37,sec=12}
+            local n=Time.next(t,{interval=600});assert(n>t and n-t<=600 and n%600==0)
+            assert(Time.note(nil,{interval=600,locale='en'})=='≈ UPDATED EVERY 10 MIN')
+            assert(Time.note(nil,{interval=600,locale='fr'})=='≈ ACTUALISATION / 10 MIN')
+            -- The Sleep tab offers it and saves it.
+            local st=load_module('ui/studio'):new{app=app};st.tab='Veille'
+            st:paintTo(require('ffi/blitbuffer').new(758,1024,1))
+            local target;for _,r in ipairs(st.regions)do if r.interval==600 then target=r end end
+            assert(target,'10 min segment missing')
+            st:onTap(nil,{pos={x=target.x+target.w/2,y=target.y+target.h/2}})
+            assert(st.draft.interval==600 and st:apply() and app.settings.data.interval==600)
+            st:onCloseWidget()
+            -- The scheduler arms a 10-minute RTC alarm and re-arms after a cycle.
+            local mgr=app.device.wakeup_mgr;mgr._task_queue={}
+            local real=os.time;local now=t;os.time=function(x)if x then return real(x)end;return now end
+            local p=load_module('power/scheduler').new{ui=app.ui,mgr=mgr,refresh=function()end,sleep=function()end,failed=function()end}
+            assert(p:start(app.settings.data));assert(p.stats.next==n)
+            now=n;assert(mgr:wakeupAction(30));app.ui:runNext()
+            assert(p.stats.next==n+600,'not re-armed for the next 10 minutes')
+            p:stop();os.time=real
         ''')
 
 if __name__=='__main__':unittest.main()

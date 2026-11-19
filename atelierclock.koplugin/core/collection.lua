@@ -2,7 +2,7 @@ local load=...
 local U=load("core/util")
 local C={}
 C.providers={"none","date","battery","day","week","world","book"}
-C.names={none="Vide",date="Date",battery="Batterie",day="Journée",week="Semaine",world="Autre fuseau",book="Lecture"}
+C.names={none="Empty",date="Date",battery="Battery",day="Day",week="Week",world="World clock",book="Reading"}
 C.zones={"UTC","Europe/Paris","Europe/London","America/New_York","Asia/Tokyo"}
 function C.current(s)
     for _,v in ipairs(s.collection or {})do if v.uid==s.active_id and v.face==s.face then return v end end
@@ -14,7 +14,7 @@ function C.options(s,face)
 end
 function C.select(s,item) s.active_id=item.uid;s.face=item.face end
 function C.add(s,face,copy)
-    if #s.collection>=24 then return nil,"Collection limitée à 24 cadrans."end
+    if #s.collection>=24 then return nil,"The collection is limited to 24 faces."end
     local used={};for _,v in ipairs(s.collection)do used[v.uid]=true end
     local n=1;while used["c"..n]do n=n+1 end
     local item=copy and U.copy(copy)or {face=face.id,title=face.name,style="plein",appearance="follow",slots={}}

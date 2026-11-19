@@ -42,7 +42,7 @@ function D:select()
     local platform,reason
     local s=self:settings()
     if s.display_engine=="classic"then
-        self.profile=Profile.select(self.device.model,nil,s,"Choisi dans les réglages");return self.profile
+        self.profile=Profile.select(self.device.model,nil,s,"Chosen in settings");return self.profile
     end
     local factory=self.platform_factory or function(device,screen)return dofile(ENGINE.."platform.lua")(device,screen)end
     local ok,result=pcall(factory,self.device,self.screen)
@@ -51,7 +51,7 @@ function D:select()
         local bb=self.screen.bb
         local rotated=bb and bb.getRotation and bb:getRotation()~=0
         local inverted=bb and bb.getInverse and bb:getInverse()~=0
-        if rotated or inverted then platform=nil;reason="Moteur fluide disponible en portrait, sans mode nuit"end
+        if rotated or inverted then platform=nil;reason="Fluid engine available in portrait, without night mode"end
     end
     local cached=D.cache[self.device.model]
     if platform and cached and cached.ok==false then platform=nil;reason=cached.reason end
@@ -71,7 +71,7 @@ function D:start()
         local Startup=self.startup_factory or dofile(ENGINE.."startup.lua")
         self.probe=Startup.new(self.screen,self.platform)
     end)
-    if not ok then return self:fail("Vérification du moteur : "..tostring(err),true)end
+    if not ok then return self:fail("Engine check: "..tostring(err),true)end
     self.state="probing";self:emit()
     self.probe_action=function()
         if self.closed or self.state~="probing"then return end
@@ -82,7 +82,7 @@ function D:start()
         if ready then D.cache[self.device.model]={ok=true};self.state="classic";self:launch()
         else
             D.cache[self.device.model]={ok=false,reason=tostring(reason)}
-            self:fail("Moteur fluide indisponible : "..tostring(reason),true)
+            self:fail("Fluid engine unavailable: "..tostring(reason),true)
         end
     end
     self.ui:scheduleIn(0.025,self.probe_action)
@@ -102,7 +102,7 @@ function D:launch()
         if backend then pcall(backend.stop,backend);pcall(backend.kill,backend)
             for _=1,100 do if backend:done()then break end;usleep(2000)end
             pcall(backend.free,backend)end
-        return self:fail("Démarrage du moteur fluide : "..tostring(err),true)
+        return self:fail("Fluid engine start: "..tostring(err),true)
     end
     self.state="fluid";self.started=now();self.last={};self.rates={};self.published_once=false
     logger.info("AtelierClock: Fluid Ink",self.profile.label)
@@ -121,7 +121,7 @@ function D:publish(frame,moving)
     local s={wave=moving and p.wave or p.wave_still,dither=p.dither,gamma=p.gamma,window=p.window,
         capture=p.capture,paused=rest and not moving,dragging=moving,drive_policy=p.drive_policy,phase=p.phase or 0}
     local ok,result=pcall(self.backend.publish,self.backend,frame,s)
-    if not ok then self:abort("Publication : "..tostring(result));return false end
+    if not ok then self:abort("Publish: "..tostring(result));return false end
     self.published_once=true
     return result>=0
 end
@@ -131,14 +131,14 @@ function D:check()
     if self.state~="fluid"or not self.backend then return self.state end
     local b=self.backend
     local ok,s=pcall(b.stats,b)
-    if not ok then self:abort("Statistiques illisibles");return self.state end
+    if not ok then self:abort("Unreadable statistics");return self.state end
     if (s.phase_errno or 0)>0 and(self.profile.phase or 0)>0 then
         self.profile=Profile.withoutPulses(self.profile,s.phase_errno)
         pcall(b.setPhase,b,0,self.profile.drive_policy);self.notice=self.profile.detail;self:emit()
     end
     if b:done()then
         if b.watchdogTripped and b:watchdogTripped()then return self:recover()end
-        self:abort("Processus d’affichage arrêté (état "..tostring(s.state)..")");return self.state
+        self:abort("Display process stopped (state "..tostring(s.state)..")");return self.state
     end
     if (s.errors or 0)>0 then self:abort("ioctl EPDC : errno "..tostring(s.last_errno));return self.state end
     self:sample(s)
@@ -162,10 +162,10 @@ function D:recover()
         local state=b.recoveryState and b:recoveryState()or 1
         if state==0 and now()-started<3 then self.ui:scheduleIn(0.025,poll);return end
         local freed,err=true,nil
-        if state==1 then freed,err=b:free()else freed,err=false,"Restauration non confirmée après arrêt du moteur. Redémarrer la liseuse."end
+        if state==1 then freed,err=b:free()else freed,err=false,"Restore not confirmed after the engine stopped. Restart the reader."end
         self.backend=nil
-        self:fail(freed==false and err or "Moteur fluide interrompu par sa sécurité : affichage classique pour cette session.")
-        D.cache[self.device.model]={ok=false,reason="Sécurité du moteur déclenchée pendant cette session"}
+        self:fail(freed==false and err or "Fluid engine stopped by its safety watchdog: classic display for this session.")
+        D.cache[self.device.model]={ok=false,reason="Engine watchdog triggered during this session"}
     end
     poll();return self.state
 end
@@ -212,7 +212,7 @@ function D:releaseNow(keep)
         -- Could not reap in time: free later, never with a live worker.
         local function reap()if b:done()then pcall(b.free,b)else self.ui:scheduleIn(0.05,reap)end end
         self.ui:scheduleIn(0.05,reap);self.resume_after=nil
-        self.notice="Moteur fluide arrêté en urgence.";return false
+        self.notice="Fluid engine stopped in an emergency.";return false
     end
     local ok,freed,err=pcall(b.free,b)
     if not ok or freed==false then self.resume_after=nil;self.notice=not ok and tostring(freed)or err;return false end
@@ -240,7 +240,7 @@ function D:close(callback)
 end
 function D:info()
     local p=self.profile or {}
-    return {state=self.state,label=p.label or "Classique KOReader",detail=self.notice or p.detail,
+    return {state=self.state,label=p.label or "Classic KOReader",detail=self.notice or p.detail,
         fps=p.fps,rates=self.rates,phase=p.phase,model=self.device.model}
 end
 function D.resetCache()D.cache={}end
