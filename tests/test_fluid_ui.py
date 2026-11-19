@@ -231,6 +231,20 @@ class FluidStudioTests(unittest.TestCase):
             assert(st2:onTap(nil,{pos={x=10,y=10}})==true)
             run(.2);assert(b2.freed and st2.closed)
         ''')
+    def test_11_studio_is_never_a_toast_or_transparent_widget(self):
+        # UIManager reads these fields on any widget; a method with one of these
+        # names (e.g. Studio:toast) made KOReader treat the studio as a toast and
+        # forward every tap to the file browser underneath.
+        self.r.lua.execute(r'''
+            local flags={'toast','is_always_active','active_widgets','invisible','alpha','honor_silent_mode',
+                'allow_concurrent_taps','tap_interval_override','movable','show_parent'}
+            local st=studio()
+            for _,f in ipairs(flags)do assert(st[f]==nil,'studio exposes KOReader widget field: '..f)end
+            assert(st.modal and st.covers_fullscreen and st.stop_events_propagation and st.name=='atelierclock_studio')
+            local clock=app:content(false)
+            for _,f in ipairs(flags)do assert(clock[f]==nil,'clock exposes KOReader widget field: '..f)end
+            clock:onCloseWidget();st:onCloseWidget()
+        ''')
     def test_08_fluid_frames_screenshots(self):
         lua=self.r.lua
         lua.execute(r'''

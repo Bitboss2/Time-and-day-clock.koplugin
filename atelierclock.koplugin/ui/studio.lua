@@ -14,7 +14,7 @@ local BB=require("ffi/blitbuffer")
 local Geom=require("ui/geometry")
 local GestureRange=require("ui/gesturerange")
 -- Same widget flags as Fluid Ink's own demo: every gesture stays here.
-local Studio=load("ui/studio_actions"):extend{covers_fullscreen=true,modal=true,
+local Studio=load("ui/studio_actions"):extend{name="atelierclock_studio",covers_fullscreen=true,modal=true,
     stop_events_propagation=true,disable_double_tap=true,dithered=false}
 local logger=require("logger")
 -- Internal tab keys stay stable (settings, tests); the second field is the label.
@@ -115,7 +115,7 @@ function Studio:dropPreview()
 end
 function Studio:refresh()
     self.content_dirty=true;self.layers.header=nil
-    if self.status~=""and self.status~=self.shown_status then self:toast(self.status)end
+    if self.status~=""and self.status~=self.shown_status then self:notify(self.status)end
     self:request()
 end
 -- Request at least one new frame.
@@ -216,7 +216,7 @@ function Studio:cancelDraft()
     self.status="Changes discarded";self:refresh()
 end
 -- Toasts replace the old status line: short, animated, never blocking.
-function Studio:toast(text)
+function Studio:notify(text)
     self.shown_status=text;self.toast_text=text;self.layers.toast=nil
     self.toast_until=Motion.now()+2.6;self.toast_spring:set(1)
     if not self:animated()then self.toast_spring:jump(1)end
@@ -348,7 +348,7 @@ function Studio:paintTo(bb,x,y)
             if not self.display:start()and self.display.state=="classic"and self.display:compatible()
                 and self.draft.display_engine~="classic"then
                 -- Say plainly why a Fluid Ink reader is on the classic display.
-                self:toast("Classic display: "..tostring(self.display.profile.detail));self:request()
+                self:notify("Classic display: "..tostring(self.display.profile.detail));self:request()
             end
         end)
     end
@@ -436,7 +436,7 @@ end
 function Studio:onDisplay(state)
     if self.closed then return end
     if state=="fluid"then
-        self:toast("Fluid engine on · "..tostring(self.display.profile.label))
+        self:notify("Fluid engine on · "..tostring(self.display.profile.label))
         self.content_dirty=true;self.layers.header=nil;self:compose();self.display:publish(self.frame,false)
         if self:animated()then self:kick()end
         self.app.ui:unschedule(self.watch_action);self.app.ui:scheduleIn(1,self.watch_action)
@@ -444,7 +444,7 @@ function Studio:onDisplay(state)
         local notice=self.display.notice
         if notice and not self.display.notice_quiet and notice~=self.last_display_notice
             and(self.display:compatible()or self.draft.display_engine=="fluid")then
-            self.last_display_notice=notice;self:toast(notice)
+            self.last_display_notice=notice;self:notify(notice)
         end
         if self.ticking then self:finishAnimations()end
         self.frame_dirty=true;self.content_dirty=true

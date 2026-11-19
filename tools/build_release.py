@@ -4,7 +4,7 @@ import hashlib,json,shutil,zipfile,re
 
 ROOT=Path(__file__).resolve().parents[1]
 PLUGIN=ROOT/'atelierclock.koplugin'
-VERSION='0.3.1'
+VERSION='0.3.2'
 
 def build():
     results=(ROOT/'tests/test-results.txt').read_text()

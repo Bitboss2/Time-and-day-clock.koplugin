@@ -9,6 +9,19 @@ Part C maps every *Time & Day* feature to its current equivalent.
 
 ---
 
+## 0.3.2 — the real cause: KOReader took the studio for a toast
+
+Reproduced in the official KOReader v2026.07.1 emulator with ZenOS 4.3.2 installed, the setup of the test reader.
+
+**The cause.** The studio had a method named `toast()` for its notifications. KOReader's `UIManager` checks `widget.toast` to recognise toast notifications, and a method is a truthy value, so the studio was handled as a toast. KOReader never stops event propagation at a toast. Every tap and scroll therefore went to the studio **and then** to the screen underneath (the ZenOS home), which opened books. A tap on the home or navbar area then ran ZenOS's `closeWidgetsAbove()`, which closed the studio without a refresh: the screen kept showing the studio while the home screen was really in front. The emulator's window stack showed the studio flagged `[T]`.
+
+**The fix.**
+- The method is renamed `notify()`, and the studio is named `atelierclock_studio`.
+- A regression test forbids the studio and the clock from exposing any field that `UIManager` reads as a widget flag (`toast`, `is_always_active`, `active_widgets`, `invisible`, `alpha`…).
+- Under ZenOS in the emulator, after the fix: 60 taps spread over the whole screen, plus a pan, a swipe and a long press. The studio stays on top, nothing is closed and no book opens.
+
+The 0.3.1 safeguards (worker dying with KOReader, guarded entry points, no KOReader refresh while the worker runs) are kept. The engine's watchdog trip seen in 0.3.0 happened while the home screen underneath was also reacting to taps, and should not recur. Fluid Ink itself cannot run in the emulator (no Kobo EPDC), so the 30 Hz path still needs the reader.
+
 ## 0.3.1 — fixes after the first test on a Kobo Aura 2
 
 The first reader test of 0.3.0 found three problems:

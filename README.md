@@ -2,7 +2,7 @@
 
 **Sleep-screen clocks for KOReader, with a full-screen studio built for an e-reader that no longer refreshes at 2–3 Hz but at 30 Hz.**
 
-Version **0.3.1 "Fluid"**, 19 November 2026 · [Changelog](CHANGELOG.md) · [Feature checklist](docs/FEATURES.md)
+Version **0.3.2 "Fluid"**, 19 November 2026 · [Changelog](CHANGELOG.md) · [Feature checklist](docs/FEATURES.md)
 
 ![Three Atelier Clock 0.3.0 screens: faces, modules, sleep screen](docs/media/hero.png)
 
@@ -129,7 +129,7 @@ PYTHONPATH=tests python -m unittest discover -s tests -p 'test_*.py'
 PYTHONPATH=tests python tools/build_screenshots.py
 ```
 
-The suite has **171 tests**: rendering, power, RTC on all 10 models, the 10-minute profile, the simulated Fluid engine and animations on a deterministic clock. KOReader's plugin validator reports no errors.
+The suite has **172 tests**: rendering, power, RTC on all 10 models, the 10-minute profile, the simulated Fluid engine and animations on a deterministic clock. KOReader's plugin validator reports no errors.
 
 ## Licences
 

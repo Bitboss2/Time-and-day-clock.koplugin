@@ -1,5 +1,5 @@
 {
-  "version": "0.3.1",
+  "version": "0.3.2",
   "date": "2026-11-19",
   "display": {
     "engine": "Fluid Ink 6.5.0 (ABI 6500), embedded",
@@ -33,7 +33,7 @@
     "hardware_tested": false
   },
   "preinstalled_clocks": 10,
-  "tests": 171,
+  "tests": 172,
   "native_rtc_simulated_minutes": 90,
   "tested_dpi": [
     167,
