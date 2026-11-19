@@ -1,0 +1,32 @@
+{
+  "status": "passed",
+  "cases": {
+    "pmic_before_deadline": -2,
+    "epdc_before_deadline": -1,
+    "epdc_one_tick_before": -1,
+    "epdc_at_deadline": 0,
+    "pending_powerdown": -1,
+    "epdc_still_powered": -2,
+    "frontlight_pending": -1,
+    "voltage_recovery": -1
+  },
+  "fp9928_cases": {
+    "deep_before_discharge": -7,
+    "shallow_before_discharge": 0,
+    "shallow_vin_calls": 0,
+    "shallow_ep3v3_calls": 0,
+    "deep_after_discharge": 0,
+    "deep_ep3v3_calls": 1,
+    "shallow_output_still_enabled": -7
+  },
+  "source_sha256": {
+    "drivers/video/mxc/lk_tps65185.c": "fb3610c849d1072447ba983da58ddd9ae063c6025d4cc0eabf8a66ce56de1acb",
+    "drivers/video/mxc/mxc_epdc_fb.c": "ce5e0a916e35deb288a1b50134ff81930b27a6917bec018b21b283ed4fce9ad7",
+    "drivers/video/mxc/lk_fp9928.c": "e74b2fa53e6070cb1008224be8283870e67d472831beabc5329c19e3f63be7a5"
+  },
+  "execution": "host C compiler; controlled hardware stubs",
+  "kernel_booted": false,
+  "hardware_timing_validated": false,
+  "energy_validated": false,
+  "source_url": "https://github.com/kobolabs/Kobo-Reader/tree/master/hw/imx6sl-auraonetwo"
+}

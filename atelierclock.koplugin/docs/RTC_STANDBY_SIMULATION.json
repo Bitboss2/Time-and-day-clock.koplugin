@@ -1,0 +1,39 @@
+{
+  "cycles": 240,
+  "rows": [
+    {
+      "minute_standby": false,
+      "elapsed_s": 14400.81550002098,
+      "kernel_clock_sleep_percent": 82.37586131151016,
+      "awake_s": 2538.019695997238,
+      "mem_calls": 718,
+      "short_returns": 478,
+      "standby_calls": 0,
+      "sync_calls": 718
+    },
+    {
+      "minute_standby": true,
+      "elapsed_s": 14400.81550002098,
+      "kernel_clock_sleep_percent": 96.82011073443853,
+      "awake_s": 457.9299862384796,
+      "mem_calls": 2,
+      "short_returns": 1,
+      "standby_calls": 239,
+      "sync_calls": 2
+    }
+  ],
+  "hardware_measured": false,
+  "energy_validated": false,
+  "assumptions": {
+    "driver_clock": "active time; paused in system standby",
+    "epdc_and_vee_s": 7,
+    "screen_wait_s": 0.6085,
+    "wake_margin_s": 0.1,
+    "render_s": 0.007,
+    "sync_s": 0.1,
+    "refusal_s": 0.2,
+    "successful_kernel_active_cost_s": 0,
+    "native_standby_pre_delay_s": 0.09
+  },
+  "warning": "Native KOReader functions, simulated peripherals and clock domains; no electrical model."
+}

@@ -1,0 +1,83 @@
+---------------------------------------------
+                launching...
+  _  _____  ____                _
+ | |/ / _ \|  _ \ ___  __ _  __| | ___ _ __
+ | ' / | | | |_) / _ \/ _` |/ _` |/ _ \ '__|
+ | . \ |_| |  _ <  __/ (_| | (_| |  __/ |
+ |_|\_\___/|_| \_\___|\__,_|\__,_|\___|_|
+
+ It's a scroll... It's a codex... It's KOReader!
+
+ [*] Current time: 11/01/26-13:35:40
+has monolibtic? no (libs/libkoreader-monolibtic.so: cannot open shared object file: No such file or directory)
+lib_search_path: libs/?
+lib_basic_format: lib%s.so
+lib_version_format: lib%s.so.%s
+ [*] Version: v2026.07.1
+
+ffi.load: rt.so.1 (RTLD_GLOBAL)
+ffi.findlib: utf8proc [3]
+ffi.load: libs/libutf8proc.so.3
+ffi.findlib: blitbuffer
+ffi.load: libs/libblitbuffer.so
+ffi.findlib: SDL3 [0]
+ffi.load: libs/libSDL3.so.0
+Started SDL in [base path unavailable] using dummy video driver
+ffi.findlib: lodepng
+ffi.load: libs/liblodepng.so
+11/01/26-13:35:40 INFO  initializing for device Emulator 
+11/01/26-13:35:40 INFO  framebuffer resolution: {
+  h = 1024,
+  w = 758
+} --[[table: 0x7f8f3eea1f28]] 
+ffi.findlib: wrap-mupdf
+ffi.load: libs/libwrap-mupdf.so
+ffi.findlib: sqlite3 [0]
+ffi.load: libs/libsqlite3.so.0
+11/01/26-13:35:40 INFO  Applying patch: /workspace/scratch/759b29bfe409/runtime-koreader/home-beta9-x86/patches/2-atelier-native-test.lua 
+ffi.findlib: freetype [6]
+ffi.load: libs/libfreetype.so.6
+ffi.findlib: harfbuzz [0]
+ffi.load: libs/libharfbuzz.so.0
+ffi.findlib: zstd [1]
+ffi.load: libs/libzstd.so.1
+ffi.findlib: archive [13]
+ffi.load: libs/libarchive.so.13
+11/01/26-13:35:40 INFO  Looking for plugins in directory: plugins 
+11/01/26-13:35:40 INFO  Looking for plugins in directory: /workspace/scratch/759b29bfe409/runtime-koreader/home-beta9-x86/plugins/ 
+11/01/26-13:35:40 WARN  PluginLoader: atelierclock name in _meta.lua, is deprecated and will be ignored. 
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+11/01/26-13:35:40 WARN  No gestures file or invalid gestures file found, copying defaults 
+11/01/26-13:35:40 INFO  ReaderStatistics: Migrating DB from schema 0 to schema 20221111 ... 
+11/01/26-13:35:40 WARN  ReaderStatistics: A DB backup from schema 0 to schema 20221111 already exists! 
+11/01/26-13:35:40 ERROR Failed to initialize statistics plugin: common/lua-ljsqlite3/init.lua:60: ljsqlite3[error] no such table: page_stat
+stack traceback:
+	common/lua-ljsqlite3/init.lua:60: in function 'err'
+	common/lua-ljsqlite3/init.lua:235: in function 'E_conn'
+	common/lua-ljsqlite3/init.lua:241: in function 'T_okcode'
+	common/lua-ljsqlite3/init.lua:374: in function 'prepare'
+	common/lua-ljsqlite3/init.lua:386: in function 'exec'
+	plugins/statistics.koplugin/main.lua:505: in function 'upgradeDBto20201010'
+	plugins/statistics.koplugin/main.lua:335: in function 'checkInitDatabase'
+	plugins/statistics.koplugin/main.lua:147: in function 'init'
+	frontend/ui/widget/widget.lua:46: in function <frontend/ui/widget/widget.lua:40>
+	[C]: in function 'pcall'
+	frontend/pluginloader.lua:480: in function 'createPluginInstance'
+	frontend/apps/filemanager/filemanager.lua:420: in function 'init'
+	frontend/ui/widget/widget.lua:46: in function 'new'
+	frontend/apps/filemanager/filemanager.lua:1322: in function 'showFiles'
+	reader.lua:250: in main chunk
+	[C]: at 0x5598844b73b0 
+ATELIER_NATIVE: plugin loaded; ten clocks; arch=x64
+ATELIER_NATIVE: rendered totem
+ATELIER_NATIVE: rendered duplex
+ATELIER_NATIVE: rendered index
+ATELIER_NATIVE: rendered halo
+ATELIER_NATIVE: rendered journal
+ATELIER_NATIVE: rendered lisiere
+ATELIER_NATIVE: rendered mosaique
+ATELIER_NATIVE: rendered octant
+ATELIER_NATIVE: rendered typo

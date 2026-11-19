@@ -1,0 +1,11 @@
+{
+  "reference_version": "0.2.4-beta.8",
+  "reference_archive_sha256": "82c094cccaa4e191f179ecf9e4ac06b835d646b3ca312d3e2dddb86f35f131de",
+  "controlled_minutes": 60,
+  "standby_calls": 1,
+  "disabled": true,
+  "reason": "Veille profonde refus\u00e9e apr\u00e8s d\u00e9charge",
+  "driver_timer": "active time, stopped in system standby",
+  "hardware_measured": false,
+  "matches_observed_symptom": "one bridge then same deep-suspend refusal fallback"
+}

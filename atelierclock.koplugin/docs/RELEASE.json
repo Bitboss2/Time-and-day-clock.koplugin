@@ -1,0 +1,155 @@
+{
+  "version": "0.3.0",
+  "date": "2026-11-19",
+  "display": {
+    "engine": "Fluid Ink 6.5.0 (ABI 6500), embedded",
+    "aura2_v1": {
+      "drive": "Fluid Ink v6",
+      "policy": 12,
+      "pulses": 2,
+      "profile": "D\u00e9bit (file 1, Bayer 8x8, sans gamma)",
+      "target_hz": 30
+    },
+    "fallback": "Fluid Ink v6 sans impulsions (policy 12 custom / 2 constructeur, DU au repos)",
+    "classic": "UIManager refresh, animations instantan\u00e9es",
+    "optical_cadence_measured": false,
+    "factory_reference_redistributed": false
+  },
+  "rtc_models": {
+    "kobo": [
+      "Kobo_star",
+      "Kobo_star_r2",
+      "Kobo_snow",
+      "Kobo_snow_r2",
+      "Kobo_alyssum",
+      "Kobo_daylight",
+      "Kobo_nova"
+    ],
+    "kindle_powerd": [
+      "KindlePaperWhite2",
+      "KindlePaperWhite3",
+      "KindleVoyage"
+    ],
+    "hardware_tested": false
+  },
+  "preinstalled_clocks": 10,
+  "tests": 168,
+  "native_rtc_simulated_minutes": 90,
+  "tested_dpi": [
+    167,
+    212,
+    300
+  ],
+  "simulated_rtc_cycles": 10080,
+  "hardware_tested": false,
+  "weekly_battery_drain": "unmeasured",
+  "clock_format": 2,
+  "native_power_simulated_minutes": 180,
+  "power_time_unit": "seconds via ui/time",
+  "reuse_suspend_models": [
+    "Kobo_star"
+  ],
+  "energy_target": {
+    "factor": 7,
+    "maximum_points_per_hour": 0.17804154302670624,
+    "hardware_verified": false
+  },
+  "short_return_recovery": {
+    "maximum_retries_per_clock_cycle": 2,
+    "guard_delays_s": [
+      1,
+      2
+    ],
+    "window_s": 12,
+    "retains_native_full_prepare": true
+  },
+  "retry_ownership": "private callback argument; native resume cancellation retained",
+  "kernel_evidence": {
+    "read_only": true,
+    "maximum_snapshot_bytes": 16384,
+    "maximum_automatic_short_snapshots": 3,
+    "automatic_exit_report": "settings/atelierclock/last-session.json"
+  },
+  "native_integration": {
+    "koreader": "v2026.07.1 Linux SDL3",
+    "architectures": [
+      "x86_64",
+      "armv7 QEMU Cortex-A9 user mode"
+    ],
+    "checks_per_run": 13,
+    "kobo_kernel_booted": false,
+    "energy_measured": false
+  },
+  "vendor_kernel_branches": {
+    "checks": 15,
+    "hardware_interactions": "controlled C stubs",
+    "kobo_kernel_booted": false
+  },
+  "fp9928_rtc_standby": {
+    "activation": "fresh verified VEE refusal, Kobo_star, Linux 3.0.35, native standby available",
+    "native_state": "standby",
+    "duration": "until existing minute alarm",
+    "auxiliary_alarms": 0,
+    "native_fallback": true,
+    "session_counters_reset": true,
+    "user_settings_changed": false,
+    "hardware_energy_verified": false
+  },
+  "rtc_standby_simulated_minutes": 240,
+  "native_refusal_uses_kernel_flag_not_duration_only": true,
+  "user_beta7_session": {
+    "duration_s": 11150,
+    "battery_drop_points": 1,
+    "rtc_cycles": 186,
+    "mem_refusals_in_log": 372,
+    "verified_sleep_percent": 80.707539516147,
+    "driver": "FP9928 VEE, confirmed in supplied kernel messages"
+  },
+  "user_beta6_log": {
+    "interval": "2026-10-31 09:58 <= timestamp < 12:30",
+    "complete_cycles": 152,
+    "mem_refusals": 227,
+    "guard_wait_s": 1380,
+    "cycles_with_15_second_guard": 77
+  },
+  "user_beta5_observation": {
+    "drop_points": 10,
+    "duration_minutes": 679,
+    "model": "Kobo_star",
+    "render_cpu_ms": 23,
+    "requested_area_percent": 6.5,
+    "requested_area_factor": 1.13,
+    "native_call_percent": 67,
+    "direct_reused": 1,
+    "fallbacks": 1,
+    "source": "user photographs, no control baseline"
+  },
+  "delta_refresh": {
+    "maximum_regions": 4,
+    "native_buffer": "BB8, no rotation, matching inversion",
+    "pixel_scan_limit": 1048576
+  },
+  "user_battery_observation": {
+    "version": "0.2.0-beta.3",
+    "drop_points": 7,
+    "duration_minutes": 337,
+    "model": "Kobo_star",
+    "render_cpu_ms": 7,
+    "requested_area_percent": 9.3,
+    "native_duration_raw_fts": 2787663,
+    "native_duration_s": 2.787663,
+    "source": "user photographs, no control baseline"
+  },
+  "clock_sha256": {
+    "duplex.clock": "ba8653988e9845365a36e680c0cf17ff8497b54e3bd091e4f4013462b136f1a5",
+    "halo.clock": "57b0883639c4e21565a4d6c574a1bd12f6899d83a3a0a7ada5cd4959054969ad",
+    "index.clock": "f2097ec7e20ce41c73bbaf4dd551bd09ddd17b319cd1e7974589a4c7213fdd27",
+    "journal.clock": "5d6c50f02972790c4b30d4914a338fd94b13a5580c10b1e5d1e9e5a1d0b162b4",
+    "lisiere.clock": "4c257e6af5600f7cfdb2663dcdc68e34a97ef8b982e53df8738fab2228eb65d3",
+    "mosaique.clock": "45c3833b1b9ea58526ea70d401dbf881bb1657fea7056508c0649f101887db38",
+    "octant.clock": "277870f1473f9895d4daa7e3583dfed329a734cbe7af07e8057dc30d69175493",
+    "signal.clock": "74e873f3bba68ca73050bcb56628e07dc4eb27c4b05e7d03c89f85da2402c4e4",
+    "totem.clock": "61a3c88bd052dcc588828714194245e60cce9cfaa1d51e6d00a5ee0a1fc16bd6",
+    "typo.clock": "42d1077bd3ddf858dd0e59d999cdf8c316bf597a25f0655f59be023a057de8cb"
+  }
+}

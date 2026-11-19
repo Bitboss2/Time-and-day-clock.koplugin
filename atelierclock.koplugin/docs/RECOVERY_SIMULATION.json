@@ -1,0 +1,31 @@
+{
+  "kind": "controlled_native_timing_not_hardware_energy",
+  "assumptions": {
+    "screen_wait_s": 0.12,
+    "sync_s": 0.015,
+    "transient_native_return_per_clock_cycle_s": 0.462,
+    "faults_per_cycle": 1,
+    "short_return_success": false
+  },
+  "not_proof_of_user_device_root_cause": true,
+  "results": [
+    {
+      "short_retry_enabled": false,
+      "minutes_simulated": 90,
+      "native_call_percent": 67.61,
+      "kernel_sleep_percent": 66.848,
+      "short_returns": 89,
+      "bounded_retries": 0,
+      "mem_attempts": 179
+    },
+    {
+      "short_retry_enabled": true,
+      "minutes_simulated": 90,
+      "native_call_percent": 90.682,
+      "kernel_sleep_percent": 89.921,
+      "short_returns": 89,
+      "bounded_retries": 89,
+      "mem_attempts": 179
+    }
+  ]
+}

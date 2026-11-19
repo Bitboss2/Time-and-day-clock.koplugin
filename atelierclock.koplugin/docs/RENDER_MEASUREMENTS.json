@@ -1,0 +1,137 @@
+{
+  "kind": "simulated_render_work_not_battery",
+  "screen": [
+    758,
+    1024
+  ],
+  "notes": [
+    "Pillow framebuffer and substitute fonts; electrical energy and native raster speed unmeasured.",
+    "Requested windows before controller alignment, KOReader promotion and overlap merging.",
+    "Cold equivalent includes rebuilding identical retained tiles; same design, not an older face.",
+    "Conservative area is the same face with pre-delta ink bounds, not a battery result.",
+    "Excludes initial painting and scheduled full-screen cleanup, which are unchanged.",
+    "No change to the number of RTC wakeups at the one-minute setting."
+  ],
+  "faces": [
+    {
+      "face": "totem",
+      "minutes": 60,
+      "initial_tiles": 5,
+      "redrawn_tiles": 61,
+      "cold_equivalent_tiles": 300,
+      "average_requested_area_percent": 16.83,
+      "maximum_requested_area_percent": 41.68,
+      "average_conservative_area_percent": 23.4,
+      "requested_area_reduction_factor": 1.39,
+      "maximum_commands": 2
+    },
+    {
+      "face": "duplex",
+      "minutes": 60,
+      "initial_tiles": 5,
+      "redrawn_tiles": 121,
+      "cold_equivalent_tiles": 300,
+      "average_requested_area_percent": 5.1,
+      "maximum_requested_area_percent": 14.13,
+      "average_conservative_area_percent": 18.36,
+      "requested_area_reduction_factor": 3.6,
+      "maximum_commands": 3
+    },
+    {
+      "face": "index",
+      "minutes": 60,
+      "initial_tiles": 6,
+      "redrawn_tiles": 72,
+      "cold_equivalent_tiles": 360,
+      "average_requested_area_percent": 1.73,
+      "maximum_requested_area_percent": 7.75,
+      "average_conservative_area_percent": 10.62,
+      "requested_area_reduction_factor": 6.15,
+      "maximum_commands": 2
+    },
+    {
+      "face": "halo",
+      "minutes": 60,
+      "initial_tiles": 4,
+      "redrawn_tiles": 64,
+      "cold_equivalent_tiles": 240,
+      "average_requested_area_percent": 5.25,
+      "maximum_requested_area_percent": 10.17,
+      "average_conservative_area_percent": 7.83,
+      "requested_area_reduction_factor": 1.49,
+      "maximum_commands": 4
+    },
+    {
+      "face": "journal",
+      "minutes": 60,
+      "initial_tiles": 5,
+      "redrawn_tiles": 60,
+      "cold_equivalent_tiles": 300,
+      "average_requested_area_percent": 2.44,
+      "maximum_requested_area_percent": 10.91,
+      "average_conservative_area_percent": 11.75,
+      "requested_area_reduction_factor": 4.81,
+      "maximum_commands": 1
+    },
+    {
+      "face": "lisiere",
+      "minutes": 60,
+      "initial_tiles": 4,
+      "redrawn_tiles": 60,
+      "cold_equivalent_tiles": 240,
+      "average_requested_area_percent": 2.44,
+      "maximum_requested_area_percent": 10.91,
+      "average_conservative_area_percent": 11.75,
+      "requested_area_reduction_factor": 4.81,
+      "maximum_commands": 1
+    },
+    {
+      "face": "mosaique",
+      "minutes": 60,
+      "initial_tiles": 5,
+      "redrawn_tiles": 60,
+      "cold_equivalent_tiles": 300,
+      "average_requested_area_percent": 2.66,
+      "maximum_requested_area_percent": 11.91,
+      "average_conservative_area_percent": 12.8,
+      "requested_area_reduction_factor": 4.82,
+      "maximum_commands": 1
+    },
+    {
+      "face": "octant",
+      "minutes": 60,
+      "initial_tiles": 4,
+      "redrawn_tiles": 120,
+      "cold_equivalent_tiles": 240,
+      "average_requested_area_percent": 5.55,
+      "maximum_requested_area_percent": 34.01,
+      "average_conservative_area_percent": 56.31,
+      "requested_area_reduction_factor": 10.15,
+      "maximum_commands": 4
+    },
+    {
+      "face": "typo",
+      "minutes": 60,
+      "initial_tiles": 4,
+      "redrawn_tiles": 60,
+      "cold_equivalent_tiles": 240,
+      "average_requested_area_percent": 6.01,
+      "maximum_requested_area_percent": 15.51,
+      "average_conservative_area_percent": 30.84,
+      "requested_area_reduction_factor": 5.13,
+      "maximum_commands": 2
+    },
+    {
+      "face": "signal",
+      "minutes": 60,
+      "initial_tiles": 5,
+      "redrawn_tiles": 61,
+      "cold_equivalent_tiles": 300,
+      "average_requested_area_percent": 3.9,
+      "maximum_requested_area_percent": 21.7,
+      "average_conservative_area_percent": 25.54,
+      "requested_area_reduction_factor": 6.54,
+      "maximum_commands": 3
+    }
+  ]
+}

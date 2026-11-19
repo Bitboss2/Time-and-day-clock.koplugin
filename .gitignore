@@ -1,0 +1,13 @@
+# Development harness downloads and outputs
+research-koreader/
+tests/output/
+tests/atelier-test-*/
+dist/
+__pycache__/
+*.pyc
+# Personal vendor waveform copy (Kobo Aura 2 v1). Never redistributed:
+# copy it from your own Fluid Ink 6.5 package to enable « Impulsions 2 ».
+atelierclock.koplugin/engine/fluidink/factory-reference.bin
+# Runtime logs written by the engine on the reader
+atelierclock.koplugin/engine/fluidink/inkmotion-*.log
+atelierclock.koplugin/engine/fluidink/inkmotion-*.txt

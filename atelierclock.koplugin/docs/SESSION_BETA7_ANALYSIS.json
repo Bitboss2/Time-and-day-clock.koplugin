@@ -1,0 +1,57 @@
+{
+  "version": "0.2.3-beta.7",
+  "model": "Kobo_star",
+  "interval": {
+    "start": "2026-10-31T17:18:21+01:00",
+    "end_exclusive": "2026-10-31T20:24:11+01:00",
+    "duration_s": 11150
+  },
+  "battery": {
+    "start_points": 89,
+    "end_points": 88,
+    "drop_points": 1,
+    "observed_points_per_hour": 0.32286995515695066,
+    "target_points_per_hour": 0.17804154302670624,
+    "sevenfold_verified": false,
+    "limitation": "Only one gauge point; no controlled electrical measurement."
+  },
+  "rtc": {
+    "cycles": 186,
+    "consecutive_errors": 0,
+    "dispatches": 186,
+    "recoveries": 0,
+    "alarm_lag_s": 0,
+    "events": [
+      {
+        "detail": "arrêt de la session",
+        "at": 1793474651,
+        "kind": "stop"
+      }
+    ],
+    "last_wakeup_budget": 3,
+    "errors": 0,
+    "last": 1793474640
+  },
+  "log_counts": {
+    "native_prepare": 558,
+    "mem_return": 186,
+    "mem_refusal": 372,
+    "native_retry": 372
+  },
+  "attempts": 559,
+  "short_returns": 373,
+  "verified_sleep_percent": 80.707539516147,
+  "kernel_clock_awake_s": 2151.1498230046,
+  "verified_early_fp9928_vee_reports": 3,
+  "kernel_family": "Linux 3.0.35+",
+  "pmic": "FP9928, confirmed by fresh verified kernel messages",
+  "user_settings": {
+    "interval": 60,
+    "wake_margin": 0.5,
+    "fast_rtc": true,
+    "reuse_suspend": true,
+    "full_refresh": 690,
+    "face": "duplex"
+  },
+  "user_interruption_note": "373 short calls include the last interrupted call; the log records 372 refusals before session end."
+}
